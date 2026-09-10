@@ -32,13 +32,13 @@
         </button>
     </div>
 
-    <main class="max-w-6xl mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <main class="max-w-6xl mx-auto p-4 md:p-6">
         
-        <!-- LEFT/CENTER COLUMN: TAB CONTENT CONTAINER (2 Columns Wide) -->
-        <div class="lg:col-span-2 space-y-6">
+        <!-- VIEW 1: MATCHUPS, AUTH & POOL ROSTER (ONLY VISIBLE ON MATCHUPS TAB) -->
+        <div id="viewMatchups" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             
-            <!-- VIEW 1: MATCHUPS & AUTH -->
-            <div id="viewMatchups" class="space-y-6">
+            <!-- LEFT/CENTER COLUMN: AUTH & MATCHUPS (2 Columns Wide) -->
+            <div class="lg:col-span-2 space-y-6">
                 <!-- AUTHENTICATION CARD -->
                 <div id="authCard" class="bg-gray-800 border border-gray-700 rounded-xl p-6 shadow-xl">
                     <h2 class="text-xl font-bold mb-4 flex items-center gap-2">🔑 Player Sign-In</h2>
@@ -50,8 +50,8 @@
                     </div>
                 </div>
 
-                <!-- MATCHUPS PANEL -->
-                <div class="bg-gray-800 border border-gray-700 rounded-xl p-6 shadow-xl">
+                <!-- MATCHUPS PANEL (Hidden until logged in) -->
+                <div id="matchupsPanel" class="bg-gray-800 border border-gray-700 rounded-xl p-6 shadow-xl hidden">
                     <div class="flex justify-between items-center mb-6">
                         <div>
                             <h2 class="text-2xl font-bold tracking-tight">Week 1 Confidence Matchups</h2>
@@ -78,52 +78,23 @@
 
                     <!-- Submit Button -->
                     <div class="mt-6 pt-4 border-t border-gray-700 flex justify-end">
-                        <button id="submitPicksBtn" onclick="submitPicks()" disabled class="bg-gray-700 text-gray-400 font-bold px-8 py-3 rounded-lg cursor-not-allowed transition duration-200">
-                            Sign In to Submit Picks
+                        <button id="submitPicksBtn" onclick="submitPicks()" class="bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold px-8 py-3 rounded-lg shadow-lg shadow-yellow-500/20 active:scale-95 transition duration-200 cursor-pointer">
+                            Save Confidence Picks
                         </button>
                     </div>
                 </div>
             </div>
 
-            <!-- VIEW 2: ALL PLAYERS PICKS & TOP 3 LEADERBOARD TAB -->
-            <div id="viewAllPicks" class="hidden space-y-6">
-                <!-- TOP 3 PODIUM LEADERBOARD -->
+            <!-- RIGHT COLUMN: CURRENT POOL PARTICIPANTS (Weekly Matchups Tab Sidebar Only) -->
+            <div class="space-y-6">
                 <div class="bg-gray-800 border border-gray-700 rounded-xl p-6 shadow-xl">
                     <div class="flex justify-between items-center mb-3">
-                        <h2 class="text-xl font-bold flex items-center gap-2">🏆 Top 3 Podium Standings</h2>
-                        <span id="participantCountBadge" class="bg-gray-700 text-yellow-400 text-xs font-bold px-2.5 py-1 rounded-full border border-gray-600">0 Total Players</span>
+                        <h2 class="text-xl font-bold flex items-center gap-2">👥 Pool Roster</h2>
+                        <span id="rosterCountBadge" class="bg-gray-700 text-yellow-400 text-xs font-bold px-2.5 py-1 rounded-full border border-gray-600">0 Joined</span>
                     </div>
-                    <p class="text-xs text-gray-400 mb-4">Players ranked by total confidence points accumulated (Max 136 total pts).</p>
+                    <p class="text-xs text-gray-400 mb-4">Players currently registered and active in this week's pool.</p>
                     
-                    <div class="overflow-hidden rounded-lg border border-gray-700">
-                        <table class="w-full text-left border-collapse">
-                            <thead>
-                                <tr class="bg-gray-700 text-gray-300 text-xs font-semibold uppercase tracking-wider">
-                                    <th class="p-3">Rank</th>
-                                    <th class="p-3">Player</th>
-                                    <th class="p-3 text-center">MNF TB</th>
-                                    <th class="p-3 text-right">Confidence Pts</th>
-                                </tr>
-                            </thead>
-                            <tbody id="leaderboardBody" class="divide-y divide-gray-700 text-sm">
-                                <!-- Loaded dynamically via JavaScript -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- ALL PLAYERS PICKS MATRIX -->
-                <div class="bg-gray-800 border border-gray-700 rounded-xl p-6 shadow-xl">
-                    <div class="flex justify-between items-center mb-4">
-                        <div>
-                            <h2 class="text-2xl font-bold tracking-tight">🌐 All Players' Confidence Matrix</h2>
-                            <p class="text-sm text-gray-400">Values inside badges represent the confidence points assigned to each pick.</p>
-                        </div>
-                        <span id="visibilityBadge" class="bg-red-500/25 text-red-400 text-xs font-semibold px-3 py-1 rounded-full border border-red-500/30">Hidden Until Kickoff</span>
-                    </div>
-                    
-                    <!-- Matrix Grid Container -->
-                    <div id="allPicksMatrixContainer" class="overflow-x-auto">
+                    <div id="participantsListContainer" class="space-y-2 max-h-96 overflow-y-auto pr-1">
                         <!-- Loaded dynamically via JavaScript -->
                     </div>
                 </div>
@@ -131,16 +102,45 @@
 
         </div>
 
-        <!-- RIGHT COLUMN: CURRENT POOL PARTICIPANTS (Weekly Matchups Tab Sidebar) -->
-        <div class="space-y-6">
+        <!-- VIEW 2: ALL PLAYERS PICKS & TOP 3 LEADERBOARD TAB (FULL WIDTH) -->
+        <div id="viewAllPicks" class="hidden space-y-6">
+            <!-- TOP 3 PODIUM LEADERBOARD -->
             <div class="bg-gray-800 border border-gray-700 rounded-xl p-6 shadow-xl">
                 <div class="flex justify-between items-center mb-3">
-                    <h2 class="text-xl font-bold flex items-center gap-2">👥 Pool Roster</h2>
-                    <span id="rosterCountBadge" class="bg-gray-700 text-yellow-400 text-xs font-bold px-2.5 py-1 rounded-full border border-gray-600">0 Joined</span>
+                    <h2 class="text-xl font-bold flex items-center gap-2">🏆 Top 3 Podium Standings</h2>
+                    <span id="participantCountBadge" class="bg-gray-700 text-yellow-400 text-xs font-bold px-2.5 py-1 rounded-full border border-gray-600">0 Total Players</span>
                 </div>
-                <p class="text-xs text-gray-400 mb-4">Players currently registered and active in this week's pool.</p>
+                <p class="text-xs text-gray-400 mb-4">Players ranked by total confidence points accumulated (Max 136 total pts).</p>
                 
-                <div id="participantsListContainer" class="space-y-2 max-h-96 overflow-y-auto pr-1">
+                <div class="overflow-hidden rounded-lg border border-gray-700">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-gray-700 text-gray-300 text-xs font-semibold uppercase tracking-wider">
+                                <th class="p-3">Rank</th>
+                                <th class="p-3">Player</th>
+                                <th class="p-3 text-center">MNF TB</th>
+                                <th class="p-3 text-right">Confidence Pts</th>
+                            </tr>
+                        </thead>
+                        <tbody id="leaderboardBody" class="divide-y divide-gray-700 text-sm">
+                            <!-- Loaded dynamically via JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ALL PLAYERS PICKS MATRIX -->
+            <div class="bg-gray-800 border border-gray-700 rounded-xl p-6 shadow-xl">
+                <div class="flex justify-between items-center mb-4">
+                    <div>
+                        <h2 class="text-2xl font-bold tracking-tight">🌐 All Players' Confidence Matrix</h2>
+                        <p class="text-sm text-gray-400">Values inside badges represent the confidence points assigned to each pick.</p>
+                    </div>
+                    <span id="visibilityBadge" class="bg-red-500/25 text-red-400 text-xs font-semibold px-3 py-1 rounded-full border border-red-500/30">Hidden Until Kickoff</span>
+                </div>
+                
+                <!-- Matrix Grid Container -->
+                <div id="allPicksMatrixContainer" class="overflow-x-auto">
                     <!-- Loaded dynamically via JavaScript -->
                 </div>
             </div>
@@ -148,7 +148,7 @@
 
     </main>
 
-    <!-- CORE APP SCRIPT & FIREBASE INTEGRATION -->
+   <!-- CORE APP SCRIPT & FIREBASE INTEGRATION -->
     <script>
         // ==========================================
         // 🔒 SECURE CONFIGURATION (HIDDEN SECRETS)
@@ -168,11 +168,11 @@
         }
 
         let currentUser = null;
-        let userPicks = {};          // Format: { g1: { team: "Seahawks", confidence: 16 }, ... }
+        let userPicks = {};          
         let tieBreakerScore = "";
         let allParticipantsPicks = {};
 
-        const FORCE_TEST_MODE = true; 
+        const FORCE_TEST_MODE = false; 
 
         const sampleGames = [
             { id: "g1", away: "Patriots", home: "Seahawks", time: "Wed Sep 9, 8:20 PM", isFirstGame: true, winner: null },
@@ -193,17 +193,17 @@
             { id: "g16", away: "Broncos", home: "Chiefs", time: "Mon Sep 14, 8:15 PM", isMNF: true, winner: null }
         ];
 
-        let sampleLeaderboard = [];
-           /** { username: "GridironGuru", points: 112, tieBreaker: 45 },
+        let sampleLeaderboard = [
+            { username: "GridironGuru", points: 112, tieBreaker: 45 },
             { username: "TouchdownTom", points: 95, tieBreaker: 51 },
             { username: "BlitzKing", points: 88, tieBreaker: 42 },
-            { username: "GridironGuy2", points: 74, tieBreaker: 55 } **/
-        
+            { username: "GridironGuy2", points: 74, tieBreaker: 55 }
+        ];
 
-        let sampleAllPicksSandbox = {};
-            /**"GridironGuru": { g1: {team: "Seahawks", confidence: 16}, g2: {team: "49ers", confidence: 15}, g16: {team: "Chiefs", confidence: 14} },
-            "TouchdownTom": { g1: {team: "Patriots", confidence: 12}, g2: {team: "Rams", confidence: 14}, g16: {team: "Broncos", confidence: 16} } **/
-        
+        let sampleAllPicksSandbox = {
+            "GridironGuru": { g1: {team: "Seahawks", confidence: 16}, g2: {team: "49ers", confidence: 15}, g16: {team: "Chiefs", confidence: 14} },
+            "TouchdownTom": { g1: {team: "Patriots", confidence: 12}, g2: {team: "Rams", confidence: 14}, g16: {team: "Broncos", confidence: 16} }
+        };
 
         window.onload = function() {
             renderMatchups();
@@ -401,7 +401,6 @@
                 const currentPick = userPicks[game.id] || {};
                 const currentConfidence = currentPick.confidence || "";
 
-                // Get all confidence values currently used by OTHER games
                 const usedConfidenceValues = new Set();
                 for (let gId in userPicks) {
                     if (gId !== game.id && userPicks[gId].confidence) {
@@ -409,7 +408,6 @@
                     }
                 }
 
-                // Generate options containing ONLY available numbers 1-16 + currently selected value
                 let optionsHtml = `<option value="">Conf Pts</option>`;
                 for (let i = 1; i <= 16; i++) {
                     if (!usedConfidenceValues.has(i) || currentConfidence == i) {
@@ -443,10 +441,7 @@
         }
 
         function selectTeam(gameId, teamName) {
-            if (!currentUser) {
-                alert("Please log in or register above to make your selections!");
-                return;
-            }
+            if (!currentUser) return;
             
             if (!userPicks[gameId]) userPicks[gameId] = {};
             userPicks[gameId].team = teamName;
@@ -460,11 +455,7 @@
         }
 
         function updateConfidence(gameId, val) {
-            if (!currentUser) {
-                alert("Please log in first!");
-                document.getElementById(`conf-${gameId}`).value = "";
-                return;
-            }
+            if (!currentUser) return;
 
             if (!userPicks[gameId]) userPicks[gameId] = {};
             
@@ -514,20 +505,22 @@
                 }
                 updateAuthUI();
                 renderLeaderboard();
-                alert(`Logged in to sandbox workspace as "${username}"!`);
             }
         }
 
         function loadUserPicks() {
             updateAuthUI();
-            if (!db) return;
+            if (!db) {
+                renderMatchups();
+                return;
+            }
             db.collection('picks').doc(currentUser).get().then((doc) => {
                 if (doc.exists) {
                     userPicks = doc.data().selections || {};
                     tieBreakerScore = doc.data().tieBreaker || "";
                     document.getElementById('tieBreakerInput').value = tieBreakerScore;
-                    renderMatchups();
                 }
+                renderMatchups();
             });
         }
 
@@ -538,14 +531,13 @@
             document.getElementById('usernameInput').value = '';
             document.getElementById('pinInput').value = '';
             document.getElementById('tieBreakerInput').value = '';
-            renderMatchups();
             updateAuthUI();
         }
 
         function updateAuthUI() {
             const statusDiv = document.getElementById('authStatus');
-            const submitBtn = document.getElementById('submitPicksBtn');
             const authCard = document.getElementById('authCard');
+            const matchupsPanel = document.getElementById('matchupsPanel');
             
             if (currentUser) {
                 statusDiv.innerHTML = `
@@ -553,23 +545,12 @@
                     <button onclick="logout()" class="text-xs bg-gray-700 hover:bg-gray-600 text-gray-200 px-3 py-1.5 rounded-md transition cursor-pointer">Sign Out</button>
                 `;
                 authCard.classList.add('hidden');
-                submitBtn.disabled = false;
-                submitBtn.className = "bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold px-8 py-3 rounded-lg shadow-lg shadow-yellow-500/20 active:scale-95 transition duration-200 cursor-pointer";
-                submitBtn.innerText = "Save Confidence Picks";
+                matchupsPanel.classList.remove('hidden');
             } else {
                 statusDiv.innerHTML = `<span class="text-xs text-gray-400 italic">Not logged in</span>`;
                 authCard.classList.remove('hidden');
-                submitBtn.disabled = true;
-                submitBtn.className = "bg-gray-700 text-gray-400 font-bold px-8 py-3 rounded-lg cursor-not-allowed transition duration-200";
-                submitBtn.innerText = "Sign In to Submit Picks";
+                matchupsPanel.classList.add('hidden');
             }
-        }
-
-        function resetHomeTabForm() {
-            userPicks = {};
-            tieBreakerScore = "";
-            document.getElementById('tieBreakerInput').value = '';
-            renderMatchups();
         }
 
         function submitPicks() {
@@ -614,7 +595,7 @@
                     }, { merge: true });
                 }).then(() => {
                     alert("Success! Your confidence picks and tie-breaker were safely uploaded.");
-                    resetHomeTabForm();
+                    logout(); // Auto-logout after successful submission
                 }).catch(err => alert("Error saving picks: " + err.message));
             } else {
                 const entry = sampleLeaderboard.find(u => u.username === currentUser);
@@ -629,7 +610,7 @@
                 renderLeaderboard();
                 renderParticipantsList();
                 alert("Confidence picks saved locally in sandbox mode!");
-                resetHomeTabForm();
+                logout(); // Auto-logout after successful submission
             }
         }
 
