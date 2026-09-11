@@ -34,10 +34,9 @@
 
     <main class="max-w-6xl mx-auto p-4 md:p-6">
         
-        <!-- VIEW 1: MATCHUPS, AUTH & POOL ROSTER (ONLY VISIBLE ON MATCHUPS TAB) -->
+        <!-- VIEW 1: MATCHUPS, AUTH & POOL ROSTER -->
         <div id="viewMatchups" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             
-            <!-- LEFT/CENTER COLUMN: AUTH & MATCHUPS (2 Columns Wide) -->
             <div class="lg:col-span-2 space-y-6">
                 <!-- AUTHENTICATION CARD -->
                 <div id="authCard" class="bg-gray-800 border border-gray-700 rounded-xl p-6 shadow-xl">
@@ -50,7 +49,7 @@
                     </div>
                 </div>
 
-                <!-- MATCHUPS PANEL (Hidden until logged in) -->
+                <!-- MATCHUPS PANEL -->
                 <div id="matchupsPanel" class="bg-gray-800 border border-gray-700 rounded-xl p-6 shadow-xl hidden">
                     <div class="flex justify-between items-center mb-6">
                         <div>
@@ -60,9 +59,8 @@
                         <span class="bg-red-500/20 text-red-400 text-xs font-semibold px-3 py-1 rounded-full border border-red-500/30">Locks at Kickoff</span>
                     </div>
 
-                    <!-- Matchups List Container -->
                     <div id="matchupsContainer" class="space-y-4">
-                        <!-- Loaded dynamically via JavaScript -->
+                        <!-- Loaded dynamically -->
                     </div>
 
                     <!-- TIE-BREAKER PANEL -->
@@ -76,16 +74,15 @@
                         </div>
                     </div>
 
-                    <!-- Submit Button -->
                     <div class="mt-6 pt-4 border-t border-gray-700 flex justify-end">
-                        <button id="submitPicksBtn" onclick="submitPicks()" class="bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold px-8 py-3 rounded-lg shadow-lg shadow-yellow-500/20 active:scale-95 transition duration-200 cursor-pointer">
+                        <button id="submitPicksBtn" onclick="submitPicks()" class="bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold px-8 py-3 rounded-lg shadow-lg shadow-yellow-500/25 active:scale-95 transition duration-200 cursor-pointer">
                             Save Confidence Picks
                         </button>
                     </div>
                 </div>
             </div>
 
-            <!-- RIGHT COLUMN: CURRENT POOL PARTICIPANTS (Weekly Matchups Tab Sidebar Only) -->
+            <!-- RIGHT COLUMN: POOL ROSTER -->
             <div class="space-y-6">
                 <div class="bg-gray-800 border border-gray-700 rounded-xl p-6 shadow-xl">
                     <div class="flex justify-between items-center mb-3">
@@ -95,22 +92,21 @@
                     <p class="text-xs text-gray-400 mb-4">Players currently registered and active in this week's pool.</p>
                     
                     <div id="participantsListContainer" class="space-y-2 max-h-96 overflow-y-auto pr-1">
-                        <!-- Loaded dynamically via JavaScript -->
+                        <!-- Loaded dynamically -->
                     </div>
                 </div>
             </div>
 
         </div>
 
-        <!-- VIEW 2: ALL PLAYERS PICKS & TOP 3 LEADERBOARD TAB (FULL WIDTH) -->
+        <!-- VIEW 2: ALL PLAYERS & LEADERBOARD -->
         <div id="viewAllPicks" class="hidden space-y-6">
-            <!-- TOP 3 PODIUM LEADERBOARD -->
             <div class="bg-gray-800 border border-gray-700 rounded-xl p-6 shadow-xl">
                 <div class="flex justify-between items-center mb-3">
                     <h2 class="text-xl font-bold flex items-center gap-2">🏆 Top 3 Podium Standings</h2>
                     <span id="participantCountBadge" class="bg-gray-700 text-yellow-400 text-xs font-bold px-2.5 py-1 rounded-full border border-gray-600">0 Total Players</span>
                 </div>
-                <p class="text-xs text-gray-400 mb-4">Players ranked by total confidence points accumulated (Max 136 total pts).</p>
+                <p class="text-xs text-gray-400 mb-4">Players ranked live by total confidence points accumulated from correct game predictions.</p>
                 
                 <div class="overflow-hidden rounded-lg border border-gray-700">
                     <table class="w-full text-left border-collapse">
@@ -123,32 +119,31 @@
                             </tr>
                         </thead>
                         <tbody id="leaderboardBody" class="divide-y divide-gray-700 text-sm">
-                            <!-- Loaded dynamically via JavaScript -->
+                            <!-- Loaded dynamically -->
                         </tbody>
                     </table>
                 </div>
             </div>
 
-            <!-- ALL PLAYERS PICKS MATRIX -->
             <div class="bg-gray-800 border border-gray-700 rounded-xl p-6 shadow-xl">
                 <div class="flex justify-between items-center mb-4">
                     <div>
                         <h2 class="text-2xl font-bold tracking-tight">🌐 All Players' Confidence Matrix</h2>
-                        <p class="text-sm text-gray-400">Values inside badges represent the confidence points assigned to each pick.</p>
+                        <p class="text-sm text-gray-400">Green borders indicate correct selections adding points to the live leaderboard.</p>
                     </div>
                     <span id="visibilityBadge" class="bg-red-500/25 text-red-400 text-xs font-semibold px-3 py-1 rounded-full border border-red-500/30">Hidden Until Kickoff</span>
                 </div>
                 
-                <!-- Matrix Grid Container -->
                 <div id="allPicksMatrixContainer" class="overflow-x-auto">
-                    <!-- Loaded dynamically via JavaScript -->
+                    <!-- Loaded dynamically -->
                 </div>
             </div>
         </div>
 
     </main>
 
-    <!-- CORE APP SCRIPT & FIREBASE INTEGRATION -->
+    <script>
+        <!-- CORE APP SCRIPT & FIREBASE INTEGRATION -->
     <script>
         // ==========================================
         // 🔒 SECURE CONFIGURATION (HIDDEN SECRETS)
@@ -167,6 +162,7 @@
             db = firebase.firestore();
         }
 
+
         let currentUser = null;
         let userPicks = {};          
         let tieBreakerScore = "";
@@ -175,8 +171,8 @@
         const FORCE_TEST_MODE = false; 
 
         const sampleGames = [
-            { id: "g1", away: "Patriots", home: "Seahawks", time: "Wed Sep 9, 8:20 PM", isFirstGame: true, winner: null },
-            { id: "g2", away: "49ers", home: "Rams", time: "Thu Sep 10, 8:35 PM", winner: null },
+            { id: "g1", away: "Patriots", home: "Seahawks", time: "Wed Sep 9, 8:20 PM", isFirstGame: true, winner: "Seahawks" }, // Example completed game with winner
+            { id: "g2", away: "49ers", home: "Rams", time: "Thu Sep 10, 8:35 PM", winner: "49ers" }, // Example completed game
             { id: "g3", away: "Bears", home: "Panthers", time: "Sun Sep 13, 1:00 PM", winner: null },
             { id: "g4", away: "Buccaneers", home: "Bengals", time: "Sun Sep 13, 1:00 PM", winner: null },
             { id: "g5", away: "Saints", home: "Lions", time: "Sun Sep 13, 1:00 PM", winner: null },
@@ -194,15 +190,14 @@
         ];
 
         let sampleLeaderboard = [];
-            /**{ username: "GridironGuru", points: 112, tieBreaker: 45 },
-            { username: "TouchdownTom", points: 95, tieBreaker: 51 },
-            { username: "BlitzKing", points: 88, tieBreaker: 42 },
-            { username: "GridironGuy2", points: 74, tieBreaker: 55 }
-        **/
+            /**{ username: "GridironGuru", points: 31, tieBreaker: 45 },
+            { username: "TouchdownTom", points: 26, tieBreaker: 51 },
+            { username: "BlitzKing", points: 15, tieBreaker: 42 }**/
+        
 
         let sampleAllPicksSandbox = {};
            /** "GridironGuru": { g1: {team: "Seahawks", confidence: 16}, g2: {team: "49ers", confidence: 15}, g16: {team: "Chiefs", confidence: 14} },
-            "TouchdownTom": { g1: {team: "Patriots", confidence: 12}, g2: {team: "Rams", confidence: 14}, g16: {team: "Broncos", confidence: 16} }**/
+            "TouchdownTom": { g1: {team: "Patriots", confidence: 12}, g2: {team: "49ers", confidence: 14}, g16: {team: "Broncos", confidence: 16} }**/
         
 
         window.onload = function() {
@@ -214,18 +209,20 @@
             checkAndUpdateCompletedGames();
         };
 
+        // Automatically fetch live scores/winners from ESPN API and update leaderboard points
         async function checkAndUpdateCompletedGames() {
             try {
                 const response = await fetch('https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard');
                 const data = await response.json();
                 
+                let scoresChanged = false;
                 if (data && data.events) {
                     data.events.forEach(event => {
                         const competition = event.competitions[0];
                         if (competition.status.type.completed) {
                             const competitors = competition.competitors;
                             const homeTeamObj = competitors.find(c => c.homeAway === 'home');
-                            const awayTeamObj = competitors.find(c => c.homeAway === 'away');
+                            const awayTeamObj = competitors.find(c => c.awayAway === 'away' || c.homeAway === 'away');
                             
                             const homeTeamName = homeTeamObj.team.shortDisplayName || homeTeamObj.team.name;
                             const awayTeamName = awayTeamObj.team.shortDisplayName || awayTeamObj.team.name;
@@ -236,15 +233,50 @@
                                 g.away.toLowerCase().includes(awayTeamName.toLowerCase())
                             );
 
-                            if (matchedGame) matchedGame.winner = winningTeam;
+                            if (matchedGame && matchedGame.winner !== winningTeam) {
+                                matchedGame.winner = winningTeam;
+                                scoresChanged = true;
+                            }
                         }
                     });
-                    
-                    if (hasFirstGameStarted()) renderAllPicksMatrix();
                 }
+
+                if (scoresChanged && db) {
+                    recalculateAllUserScoresInFirestore();
+                }
+                
+                if (hasFirstGameStarted()) renderAllPicksMatrix();
             } catch (err) {
-                console.log("Automated API check fallback: ", err);
+                console.log("Automated API check fallback active: ", err);
             }
+        }
+
+        // Recalculate total points for every participant based on finalized game winners
+        function recalculateAllUserScoresInFirestore() {
+            if (!db) return;
+
+            db.collection('picks').get().then((snapshot) => {
+                snapshot.docs.forEach(docSnap => {
+                    const playerData = docSnap.data();
+                    const username = playerData.username;
+                    const selections = playerData.selections || {};
+
+                    let totalPointsEarned = 0;
+                    sampleGames.forEach(game => {
+                        if (game.winner) {
+                            const userPick = selections[game.id];
+                            if (userPick && userPick.team && userPick.team.toLowerCase() === game.winner.toLowerCase()) {
+                                totalPointsEarned += (userPick.confidence || 0);
+                            }
+                        }
+                    });
+
+                    // Update user points in real time
+                    db.collection('users').doc(username).set({
+                        points: totalPointsEarned
+                    }, { merge: true });
+                });
+            });
         }
 
         function switchTab(tabName) {
@@ -275,7 +307,6 @@
 
         function initRealtimeListeners() {
             if (db) {
-                // Live listener for picks (updates pool roster & matrix)
                 db.collection('picks').onSnapshot((snapshot) => {
                     allParticipantsPicks = {};
                     snapshot.docs.forEach(doc => {
@@ -288,7 +319,6 @@
                     }
                 });
 
-                // Live listener for leaderboard users (updates podium standings live)
                 db.collection('users').orderBy('points', 'desc').onSnapshot((snapshot) => {
                     renderLeaderboardFromSnapshot(snapshot);
                 });
@@ -452,7 +482,6 @@
 
         function selectTeam(gameId, teamName) {
             if (!currentUser) return;
-            
             if (!userPicks[gameId]) userPicks[gameId] = {};
             userPicks[gameId].team = teamName;
             
@@ -466,15 +495,12 @@
 
         function updateConfidence(gameId, val) {
             if (!currentUser) return;
-
             if (!userPicks[gameId]) userPicks[gameId] = {};
-            
             if (val === "") {
                 delete userPicks[gameId].confidence;
             } else {
                 userPicks[gameId].confidence = Number(val);
             }
-            
             renderMatchups();
         }
 
@@ -581,6 +607,7 @@
                 return;
             }
 
+            // Calculate total points based on current completed games
             let calculatedTotalPoints = 0;
             for (let game of sampleGames) {
                 if (game.winner) {
@@ -605,7 +632,7 @@
                     }, { merge: true });
                 }).then(() => {
                     alert("Success! Your confidence picks and tie-breaker were safely uploaded.");
-                    logout(); // Auto-logout after successful submission
+                    logout();
                 }).catch(err => alert("Error saving picks: " + err.message));
             } else {
                 const entry = sampleLeaderboard.find(u => u.username === currentUser);
@@ -620,7 +647,7 @@
                 renderLeaderboard();
                 renderParticipantsList();
                 alert("Confidence picks saved locally in sandbox mode!");
-                logout(); // Auto-logout after successful submission
+                logout();
             }
         }
 
@@ -640,7 +667,7 @@
 
             tbody.innerHTML = top3Docs.map(doc => {
                 const data = doc.data();
-                return renderRow(index++, data.username, data.points, data.tieBreaker);
+                return renderRow(index++, data.username, data.points || 0, data.tieBreaker);
             }).join('');
         }
 
