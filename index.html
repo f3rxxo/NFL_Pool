@@ -148,7 +148,7 @@
 
     </main>
 
-   <!-- CORE APP SCRIPT & FIREBASE INTEGRATION -->
+    <!-- CORE APP SCRIPT & FIREBASE INTEGRATION -->
     <script>
         // ==========================================
         // 🔒 SECURE CONFIGURATION (HIDDEN SECRETS)
@@ -193,24 +193,24 @@
             { id: "g16", away: "Broncos", home: "Chiefs", time: "Mon Sep 14, 8:15 PM", isMNF: true, winner: null }
         ];
 
-        let sampleLeaderboard = [
-            { username: "GridironGuru", points: 112, tieBreaker: 45 },
+        let sampleLeaderboard = [];
+            /**{ username: "GridironGuru", points: 112, tieBreaker: 45 },
             { username: "TouchdownTom", points: 95, tieBreaker: 51 },
             { username: "BlitzKing", points: 88, tieBreaker: 42 },
             { username: "GridironGuy2", points: 74, tieBreaker: 55 }
-        ];
+        **/
 
-        let sampleAllPicksSandbox = {
-            "GridironGuru": { g1: {team: "Seahawks", confidence: 16}, g2: {team: "49ers", confidence: 15}, g16: {team: "Chiefs", confidence: 14} },
-            "TouchdownTom": { g1: {team: "Patriots", confidence: 12}, g2: {team: "Rams", confidence: 14}, g16: {team: "Broncos", confidence: 16} }
-        };
+        let sampleAllPicksSandbox = {};
+           /** "GridironGuru": { g1: {team: "Seahawks", confidence: 16}, g2: {team: "49ers", confidence: 15}, g16: {team: "Chiefs", confidence: 14} },
+            "TouchdownTom": { g1: {team: "Patriots", confidence: 12}, g2: {team: "Rams", confidence: 14}, g16: {team: "Broncos", confidence: 16} }**/
+        
 
         window.onload = function() {
             renderMatchups();
             renderLeaderboard();
             renderParticipantsList();
             updateAuthUI();
-            fetchAllParticipantsPicks();
+            initRealtimeListeners();
             checkAndUpdateCompletedGames();
         };
 
@@ -273,8 +273,9 @@
             return new Date().getTime() >= kickoffTime;
         }
 
-        function fetchAllParticipantsPicks() {
+        function initRealtimeListeners() {
             if (db) {
+                // Live listener for picks (updates pool roster & matrix)
                 db.collection('picks').onSnapshot((snapshot) => {
                     allParticipantsPicks = {};
                     snapshot.docs.forEach(doc => {
@@ -282,10 +283,19 @@
                         allParticipantsPicks[data.username] = data.selections || {};
                     });
                     renderParticipantsList();
+                    if (!document.getElementById('viewAllPicks').classList.contains('hidden')) {
+                        renderAllPicksMatrix();
+                    }
+                });
+
+                // Live listener for leaderboard users (updates podium standings live)
+                db.collection('users').orderBy('points', 'desc').onSnapshot((snapshot) => {
+                    renderLeaderboardFromSnapshot(snapshot);
                 });
             } else {
                 allParticipantsPicks = sampleAllPicksSandbox;
                 renderParticipantsList();
+                renderLeaderboard();
             }
         }
 
@@ -614,28 +624,34 @@
             }
         }
 
+        function renderLeaderboardFromSnapshot(snapshot) {
+            const tbody = document.getElementById('leaderboardBody');
+            const countBadge = document.getElementById('participantCountBadge');
+
+            countBadge.innerText = `${snapshot.size} Total Player${snapshot.size === 1 ? '' : 's'}`;
+
+            let index = 1;
+            const top3Docs = snapshot.docs.slice(0, 3);
+            
+            if (top3Docs.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-gray-500 text-xs">No standings available yet.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = top3Docs.map(doc => {
+                const data = doc.data();
+                return renderRow(index++, data.username, data.points, data.tieBreaker);
+            }).join('');
+        }
+
         function renderLeaderboard() {
             const tbody = document.getElementById('leaderboardBody');
             const countBadge = document.getElementById('participantCountBadge');
 
-            if (db) {
-                db.collection('users').orderBy('points', 'desc').limit(3).onSnapshot((snapshot) => {
-                    db.collection('users').get().then(allDocs => {
-                        countBadge.innerText = `${allDocs.size} Total Player${allDocs.size === 1 ? '' : 's'}`;
-                    });
-
-                    let index = 1;
-                    tbody.innerHTML = snapshot.docs.map(doc => {
-                        const data = doc.data();
-                        return renderRow(index++, data.username, data.points, data.tieBreaker);
-                    }).join('');
-                });
-            } else {
-                countBadge.innerText = `${sampleLeaderboard.length} Total Player${sampleLeaderboard.length === 1 ? '' : 's'}`;
-                let index = 1;
-                const sorted = [...sampleLeaderboard].sort((a, b) => b.points - a.points).slice(0, 3);
-                tbody.innerHTML = sorted.map(user => renderRow(index++, user.username, user.points, user.tieBreaker)).join('');
-            }
+            countBadge.innerText = `${sampleLeaderboard.length} Total Player${sampleLeaderboard.length === 1 ? '' : 's'}`;
+            let index = 1;
+            const sorted = [...sampleLeaderboard].sort((a, b) => b.points - a.points).slice(0, 3);
+            tbody.innerHTML = sorted.map(user => renderRow(index++, user.username, user.points, user.tieBreaker)).join('');
         }
 
         function renderRow(rank, name, points, tieBreaker) {
