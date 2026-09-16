@@ -15,7 +15,7 @@
     <!-- NAVIGATION BAR -->
     <nav class="bg-gray-800 border-b border-gray-700 p-4 sticky top-0 z-50 shadow-md">
         <div class="max-w-6xl mx-auto flex justify-between items-center">
-            <h1 class="text-xl font-bold text-yellow-500 tracking-wide">🏈 NFL CONFIDENCE POOL (1-16)</h1>
+            <h1 class="text-xl font-bold text-yellow-500 tracking-wide">🏈 NFL CONFIDENCE POOL</h1>
             <div id="authStatus" class="flex items-center gap-4">
                 <!-- Auth status dynamically rendered here -->
             </div>
@@ -51,12 +51,38 @@
 
                 <!-- MATCHUPS PANEL -->
                 <div id="matchupsPanel" class="bg-gray-800 border border-gray-700 rounded-xl p-6 shadow-xl hidden">
-                    <div class="flex justify-between items-center mb-6">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                         <div>
-                            <h2 class="text-2xl font-bold tracking-tight">Week 1 Confidence Matchups</h2>
+                            <div class="flex items-center gap-3">
+                                <h2 id="weekTitleHeader" class="text-2xl font-bold tracking-tight">Loading NFL Schedule...</h2>
+                                <select id="weekSelector" onchange="changeActiveWeek(this.value)" class="bg-gray-900 border border-gray-600 rounded-lg px-2 py-1 text-yellow-400 font-bold text-xs focus:outline-none focus:border-yellow-500">
+                                    <option value="1">Week 1</option>
+                                    <option value="2" selected>Week 2</option>
+                                    <option value="3">Week 3</option>
+                                    <option value="4">Week 4</option>
+                                    <option value="5">Week 5</option>
+                                    <option value="6">Week 6</option>
+                                    <option value="7">Week 7</option>
+                                    <option value="8">Week 8</option>
+                                    <option value="9">Week 9</option>
+                                    <option value="10">Week 10</option>
+                                    <option value="11">Week 11</option>
+                                    <option value="12">Week 12</option>
+                                    <option value="13">Week 13</option>
+                                    <option value="14">Week 14</option>
+                                    <option value="15">Week 15</option>
+                                    <option value="16">Week 16</option>
+                                    <option value="17">Week 17</option>
+                                    <option value="18">Week 18</option>
+                                </select>
+                            </div>
                             <p class="text-sm text-gray-400">Pick winners and assign unique confidence points from 1 to 16.</p>
                         </div>
-                        <span class="bg-red-500/20 text-red-400 text-xs font-semibold px-3 py-1 rounded-full border border-red-500/30">Locks at Kickoff</span>
+                        <!-- LIVE COUNTDOWN TIMER BADGE -->
+                        <div id="countdownBadge" class="bg-red-500/20 border border-red-500/30 text-red-400 text-xs font-semibold px-3 py-2 rounded-xl flex items-center gap-2">
+                            <span>⏳ Kickoff Lock in:</span>
+                            <span id="countdownTimerText" class="font-mono font-bold text-sm">--:--:--</span>
+                        </div>
                     </div>
 
                     <div id="matchupsContainer" class="space-y-4">
@@ -67,17 +93,29 @@
                     <div class="mt-8 p-4 bg-gray-900 border border-yellow-500/40 rounded-xl flex flex-col sm:flex-row justify-between items-center gap-4">
                         <div>
                             <h3 class="text-sm font-bold text-yellow-500 uppercase tracking-wide">⚡ Monday Night Tie-Breaker</h3>
-                            <p id="tieBreakerLabel" class="text-xs text-gray-400">Guess total combined points scored in the MNF game.</p>
+                            <p id="tieBreakerLabel" class="text-xs text-gray-400">Guess total combined points scored in the final game.</p>
                         </div>
                         <div class="w-full sm:w-auto">
                             <input type="number" id="tieBreakerInput" placeholder="e.g. 47" min="0" max="150" onchange="updateTieBreaker(this.value)" class="bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 text-white text-center font-bold focus:outline-none focus:border-yellow-500 w-full sm:w-32">
                         </div>
                     </div>
 
-                    <div class="mt-6 pt-4 border-t border-gray-700 flex justify-end">
-                        <button id="submitPicksBtn" onclick="submitPicks()" class="bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold px-8 py-3 rounded-lg shadow-lg shadow-yellow-500/25 active:scale-95 transition duration-200 cursor-pointer">
-                            Save Confidence Picks
-                        </button>
+                    <div class="mt-6 pt-4 border-t border-gray-700 flex flex-col sm:flex-row justify-between items-center gap-4">
+                        <!-- DOWNLOAD PROOF BUTTONS (Enabled after submission or loading active picks) -->
+                        <div id="downloadProofContainer" class="flex items-center gap-2 hidden">
+                            <span class="text-xs text-gray-400 font-medium">📥 Download Proof:</span>
+                            <button onclick="downloadPicksTxt()" class="bg-gray-700 hover:bg-gray-600 text-gray-200 text-xs font-bold px-3 py-2 rounded-lg transition cursor-pointer flex items-center gap-1">
+                                📄 .TXT
+                            </button>
+                            <button onclick="downloadPicksJpg()" class="bg-gray-700 hover:bg-gray-600 text-gray-200 text-xs font-bold px-3 py-2 rounded-lg transition cursor-pointer flex items-center gap-1">
+                                🖼️ .JPG
+                            </button>
+                        </div>
+                        <div class="w-full sm:w-auto flex justify-end">
+                            <button id="submitPicksBtn" onclick="submitPicks()" class="bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold px-8 py-3 rounded-lg shadow-lg shadow-yellow-500/25 active:scale-95 transition duration-200 cursor-pointer">
+                                Save Confidence Picks
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -142,8 +180,11 @@
 
     </main>
 
+    <!-- Hidden canvas used for generating high-res JPG proof downloads -->
+    <canvas id="proofCanvas" class="hidden"></canvas>
+
     <script>
-        // 🔒 SECURE CONFIGURATION (HIDDEN SECRETS)
+         // 🔒 SECURE CONFIGURATION (HIDDEN SECRETS)
         const firebaseConfig = {
             apiKey: "AIzaSyBpLXiQn_7XIZbJ38uV_-PwTkIQFSqUraQ",
             authDomain: "juicyo-rotation.firebaseapp.com",
@@ -160,120 +201,131 @@
         }
 
         let currentUser = null;
+        let currentWeek = 2;         
+        let sampleGames = [];        
         let userPicks = {};          
         let tieBreakerScore = "";
         let allParticipantsPicks = {};
+        let firstGameKickoffTimestamp = null;
+        let countdownInterval = null;
 
-        const FORCE_TEST_MODE = true; 
-
-        const sampleGames = [
-            { id: "g1", away: "Patriots", home: "Seahawks", time: "Wed Sep 9, 8:20 PM", isFirstGame: true, winner: "Seahawks" }, 
-            { id: "g2", away: "49ers", home: "Rams", time: "Thu Sep 10, 8:35 PM", winner: "49ers" }, 
-            { id: "g3", away: "Bears", home: "Panthers", time: "Sun Sep 13, 1:00 PM", winner: "Bears" }, // Example: multiple games set as finished for testing
-            { id: "g4", away: "Buccaneers", home: "Bengals", time: "Sun Sep 13, 1:00 PM", winner: "Bengals" },
-            { id: "g5", away: "Saints", home: "Lions", time: "Sun Sep 13, 1:00 PM", winner: "Lions" },
-            { id: "g6", away: "Bills", home: "Texans", time: "Sun Sep 13, 1:00 PM", winner: "Bills" },
-            { id: "g7", away: "Ravens", home: "Colts", time: "Sun Sep 13, 1:00 PM", winner: "Ravens" },
-            { id: "g8", away: "Browns", home: "Jaguars", time: "Sun Sep 13, 1:00 PM", winner: "Jaguars" },
-            { id: "g9", away: "Falcons", home: "Steelers", time: "Sun Sep 13, 1:00 PM", winner: "Steelers" },
-            { id: "g10", away: "Jets", home: "Titans", time: "Sun Sep 13, 1:00 PM", winner: "Jets" },
-            { id: "g11", away: "Cardinals", home: "Chargers", time: "Sun Sep 13, 4:25 PM", winner: "Cardinals" },
-            { id: "g12", away: "Dolphins", home: "Raiders", time: "Sun Sep 13, 4:25 PM", winner: "Raiders" },
-            { id: "g13", away: "Packers", home: "Vikings", time: "Sun Sep 13, 4:25 PM", winner: "Vikings" },
-            { id: "g14", away: "Commanders", home: "Eagles", time: "Sun Sep 13, 4:25 PM", winner: "Eagles" },
-            { id: "g15", away: "Cowboys", home: "Giants", time: "Sun Sep 13, 8:20 PM", winner: "Giants" },
-            { id: "g16", away: "Broncos", home: "Chiefs", time: "Mon Sep 14, 8:15 PM", isMNF: true, winner: "Chiefs" }
-        ];
-
-        let sampleLeaderboard = [
-            { username: "GridironGuru", points: 46, tieBreaker: 45 },
-            { username: "TouchdownTom", points: 26, tieBreaker: 51 },
-            { username: "BlitzKing", points: 15, tieBreaker: 42 }
-        ];
-
-        let sampleAllPicksSandbox = {
-            "GridironGuru": { g1: {team: "Seahawks", confidence: 16}, g2: {team: "49ers", confidence: 15}, g3: {team: "Bears", confidence: 15}, g16: {team: "Chiefs", confidence: 14} },
-            "TouchdownTom": { g1: {team: "Patriots", confidence: 12}, g2: {team: "49ers", confidence: 14}, g3: {team: "Panthers", confidence: 10}, g16: {team: "Broncos", confidence: 16} }
-        };
+        const FORCE_TEST_MODE = false; 
 
         window.onload = function() {
-            renderMatchups();
+            fetchScheduleForWeek(currentWeek);
             renderLeaderboard();
             renderParticipantsList();
             updateAuthUI();
             initRealtimeListeners();
-            checkAndUpdateCompletedGames();
         };
 
-        async function checkAndUpdateCompletedGames() {
+        async function fetchScheduleForWeek(weekNum) {
+            currentWeek = weekNum;
+            document.getElementById('weekTitleHeader').innerText = `Week ${weekNum} Confidence Matchups`;
+            
             try {
-                const response = await fetch('https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard');
+                const response = await fetch(`https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?week=${weekNum}&seasontype=2`);
                 const data = await response.json();
                 
-                let scoresChanged = false;
-                if (data && data.events) {
-                    data.events.forEach(event => {
+                if (data && data.events && data.events.length > 0) {
+                    sampleGames = data.events.map((event, idx) => {
                         const competition = event.competitions[0];
+                        const competitors = competition.competitors;
+                        const homeTeamObj = competitors.find(c => c.homeAway === 'home');
+                        const awayTeamObj = competitors.find(c => c.homeAway === 'away');
+                        
+                        const homeName = homeTeamObj.team.shortDisplayName || homeTeamObj.team.name;
+                        const awayName = awayTeamObj.team.shortDisplayName || awayTeamObj.team.name;
+                        const gameDate = new Date(event.date);
+                        
+                        let winnerName = null;
                         if (competition.status.type.completed) {
-                            const competitors = competition.competitors;
-                            const homeTeamObj = competitors.find(c => c.homeAway === 'home');
-                            const awayTeamObj = competitors.find(c => c.homeAway === 'away');
-                            
-                            const homeTeamName = homeTeamObj.team.shortDisplayName || homeTeamObj.team.name;
-                            const awayTeamName = awayTeamObj.team.shortDisplayName || awayTeamObj.team.name;
-                            const winningTeam = homeTeamObj.winner ? homeTeamName : awayTeamName;
-
-                            const matchedGame = sampleGames.find(g => 
-                                g.home.toLowerCase().includes(homeTeamName.toLowerCase()) || 
-                                g.away.toLowerCase().includes(awayTeamName.toLowerCase())
-                            );
-
-                            if (matchedGame && matchedGame.winner !== winningTeam) {
-                                matchedGame.winner = winningTeam;
-                                scoresChanged = true;
-                            }
+                            winnerName = homeTeamObj.winner ? homeName : awayName;
                         }
-                    });
-                }
 
-                if (scoresChanged && db) {
-                    recalculateAllUserScoresInFirestore();
+                        const isMNFGame = (idx === data.events.length - 1) || event.name.toLowerCase().includes('monday');
+
+                        return {
+                            id: `g${idx + 1}`,
+                            away: awayName,
+                            home: homeName,
+                            time: gameDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }),
+                            dateObj: gameDate,
+                            isFirstGame: idx === 0,
+                            isMNF: isMNFGame,
+                            winner: winnerName
+                        };
+                    });
+
+                    sampleGames.sort((a, b) => a.dateObj - b.dateObj);
+                    if (sampleGames.length > 16) sampleGames = sampleGames.slice(0, 16);
+
+                    if (sampleGames.length > 0) {
+                        firstGameKickoffTimestamp = sampleGames[0].dateObj.getTime();
+                        startCountdownTimer(firstGameKickoffTimestamp);
+                    }
+                } else {
+                    loadFallbackGames(weekNum);
                 }
-                
-                if (hasFirstGameStarted()) renderAllPicksMatrix();
             } catch (err) {
-                console.log("Automated API check fallback active: ", err);
+                console.log("Using fallback schedule due to API network restriction: ", err);
+                loadFallbackGames(weekNum);
             }
+
+            renderMatchups();
+            if (currentUser) loadUserPicks();
         }
 
-        // FULLY CORRECTED: Loops over ALL games and computes sum of confidence points for all correct predictions
-        function recalculateAllUserScoresInFirestore() {
-            if (!db) return;
-
-            db.collection('picks').get().then((snapshot) => {
-                snapshot.docs.forEach(docSnap => {
-                    const playerData = docSnap.data();
-                    const username = playerData.username;
-                    const selections = playerData.selections || {};
-
-                    let totalPointsEarned = 0;
-                    
-                    // Evaluate every single game in sampleGames
-                    sampleGames.forEach(game => {
-                        if (game.winner) {
-                            const userPick = selections[game.id];
-                            if (userPick && userPick.team && userPick.team.toLowerCase() === game.winner.toLowerCase()) {
-                                totalPointsEarned += Number(userPick.confidence || 0);
-                            }
-                        }
-                    });
-
-                    // Sync updated total to Firestore users collection
-                    db.collection('users').doc(username).set({
-                        points: totalPointsEarned
-                    }, { merge: true });
+        function loadFallbackGames(weekNum) {
+            sampleGames = [];
+            const teams = ["Chiefs", "49ers", "Eagles", "Ravens", "Bills", "Cowboys", "Lions", "Bengals", "Dolphins", "Packers", "Rams", "Jets", "Steelers", "Browns", "Texans", "Seahawks"];
+            for(let i=0; i<16; i++) {
+                sampleGames.push({
+                    id: `g${i+1}`,
+                    away: teams[i % teams.length],
+                    home: teams[(i+5) % teams.length],
+                    time: `Sun Sep ${12 + weekNum}, 1:00 PM`,
+                    dateObj: new Date(Date.now() + 86400000 * (i+1)),
+                    isFirstGame: i === 0,
+                    isMNF: i === 15,
+                    winner: null
                 });
-            });
+            }
+            firstGameKickoffTimestamp = sampleGames[0].dateObj.getTime();
+            startCountdownTimer(firstGameKickoffTimestamp);
+        }
+
+        function changeActiveWeek(weekVal) {
+            userPicks = {};
+            document.getElementById('downloadProofContainer').classList.add('hidden');
+            fetchScheduleForWeek(Number(weekVal));
+        }
+
+        function startCountdownTimer(targetTimeMs) {
+            if (countdownInterval) clearInterval(countdownInterval);
+            const timerText = document.getElementById('countdownTimerText');
+            
+            countdownInterval = setInterval(() => {
+                const now = new Date().getTime();
+                const distance = targetTimeMs - now;
+
+                if (distance < 0) {
+                    timerText.innerText = "LOCKED";
+                    document.getElementById('countdownBadge').className = "bg-red-500/30 border border-red-500 text-red-300 text-xs font-bold px-3 py-2 rounded-xl flex items-center gap-2";
+                    clearInterval(countdownInterval);
+                    return;
+                }
+
+                const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+                let displayStr = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                if (days > 0) displayStr = `${days}d ${displayStr}`;
+                
+                timerText.innerText = displayStr;
+            }, 1000);
         }
 
         function switchTab(tabName) {
@@ -298,33 +350,29 @@
 
         function hasFirstGameStarted() {
             if (FORCE_TEST_MODE) return true;
-            const kickoffTime = new Date("2026-09-09T20:20:00-04:00").getTime();
-            return new Date().getTime() >= kickoffTime;
+            if (!firstGameKickoffTimestamp) return false;
+            return new Date().getTime() >= firstGameKickoffTimestamp;
         }
 
         function initRealtimeListeners() {
             if (db) {
-                db.collection('picks').onSnapshot((snapshot) => {
+                db.collection(`picks_week_${currentWeek}`).onSnapshot((snapshot) => {
                     allParticipantsPicks = {};
                     snapshot.docs.forEach(doc => {
                         const data = doc.data();
                         allParticipantsPicks[data.username] = data.selections || {};
                     });
-                    
-                    // Whenever picks update, trigger a score recalculation across all completed games
-                    recalculateAllUserScoresInFirestore();
-                    
                     renderParticipantsList();
                     if (!document.getElementById('viewAllPicks').classList.contains('hidden')) {
                         renderAllPicksMatrix();
                     }
                 });
 
-                db.collection('users').orderBy('points', 'desc').onSnapshot((snapshot) => {
+                db.collection(`users_week_${currentWeek}`).orderBy('points', 'desc').onSnapshot((snapshot) => {
                     renderLeaderboardFromSnapshot(snapshot);
                 });
             } else {
-                allParticipantsPicks = sampleAllPicksSandbox;
+                allParticipantsPicks = {};
                 renderParticipantsList();
                 renderLeaderboard();
             }
@@ -334,11 +382,10 @@
             const container = document.getElementById('participantsListContainer');
             const rosterBadge = document.getElementById('rosterCountBadge');
             const players = Object.keys(allParticipantsPicks);
-
             rosterCountBadge.innerText = `${players.length} Joined`;
 
             if (players.length === 0) {
-                container.innerHTML = `<p class="text-xs text-gray-500 text-center py-4">No participants registered yet.</p>`;
+                container.innerHTML = `<p class="text-xs text-gray-500 text-center py-4">No participants registered yet for Week ${currentWeek}.</p>`;
                 return;
             }
 
@@ -347,7 +394,7 @@
                     <span class="text-sm font-semibold text-gray-200 flex items-center gap-2">
                         <span class="w-2 h-2 rounded-full bg-green-500"></span> ${player}
                     </span>
-                    <span class="text-[10px] text-gray-400 bg-gray-800 px-2 py-0.5 rounded">Active Pool</span>
+                    <span class="text-[10px] text-gray-400 bg-gray-800 px-2 py-0.5 rounded">Active</span>
                 </div>
             `).join('');
         }
@@ -356,7 +403,6 @@
             const container = document.getElementById('allPicksMatrixContainer');
             const badge = document.getElementById('visibilityBadge');
             const lockIndicator = document.getElementById('lockStatusIndicator');
-
             const unlocked = hasFirstGameStarted();
 
             if (!unlocked) {
@@ -433,7 +479,7 @@
 
         function renderMatchups() {
             const container = document.getElementById('matchupsContainer');
-            const mnfGame = sampleGames.find(g => g.isMNF);
+            const mnfGame = sampleGames.find(g => g.isMNF) || sampleGames[sampleGames.length - 1];
             if(mnfGame) {
                 document.getElementById('tieBreakerLabel').innerText = `Total combined score for ${mnfGame.away} vs ${mnfGame.home}`;
             }
@@ -450,7 +496,7 @@
                 }
 
                 let optionsHtml = `<option value="">Conf Pts</option>`;
-                for (let i = 1; i <= 16; i++) {
+                for (let i = 1; i <= sampleGames.length; i++) {
                     if (!usedConfidenceValues.has(i) || currentConfidence == i) {
                         optionsHtml += `<option value="${i}" ${currentConfidence == i ? 'selected' : ''}>${i} Pts</option>`;
                     }
@@ -460,19 +506,18 @@
                     <div class="bg-gray-900 border ${game.isMNF ? 'border-yellow-500/50 bg-yellow-500/5' : 'border-gray-700/60'} rounded-xl p-4 flex flex-col sm:flex-row justify-between items-center gap-4 transition duration-150 hover:border-gray-600">
                         <div class="text-center sm:text-left">
                             <span class="text-xs font-semibold text-gray-500 uppercase">Game ${idx+1} • ${game.time}</span>
-                            ${game.isFirstGame ? '<span class="ml-2 bg-blue-500/20 text-blue-400 text-[10px] font-bold px-2 py-0.5 rounded">SEASON OPENER</span>' : ''}
-                            ${game.isMNF ? '<span class="ml-2 bg-yellow-500/20 text-yellow-400 text-[10px] font-bold px-2 py-0.5 rounded">MNF TIE-BREAKER</span>' : ''}
-                            ${game.winner ? `<span class="ml-2 bg-green-500/20 text-green-400 text-[10px] font-bold px-2 py-0.5 rounded">FINAL: ${game.winner} Won</span>` : ''}
+                            ${game.isFirstGame ? '<span class="ml-2 bg-blue-500/20 text-blue-400 text-[10px] font-bold px-2 py-0.5 rounded">WEEK OPENER</span>' : ''}
+                            ${game.isMNF ? '<span class="ml-2 bg-yellow-500/20 text-yellow-400 text-[10px] font-bold px-2 py-0.5 rounded">TIE-BREAKER</span>' : ''}
                         </div>
                         <div class="flex items-center gap-3 w-full sm:w-auto justify-center">
-                            <button id="btn-${game.id}-${game.away}" onclick="selectTeam('${game.id}', '${game.away}')" class="pick-btn w-28 py-2.5 rounded-lg border border-gray-700 ${currentPick.team === game.away ? 'border-2 border-yellow-500 bg-yellow-500/10 text-yellow-500 font-bold' : 'bg-gray-800 text-gray-400'} text-sm font-medium hover:bg-gray-700 transition cursor-pointer">
+                            <button onclick="selectTeam('${game.id}', '${game.away}')" class="pick-btn w-28 py-2.5 rounded-lg border border-gray-700 ${currentPick.team === game.away ? 'border-2 border-yellow-500 bg-yellow-500/10 text-yellow-500 font-bold' : 'bg-gray-800 text-gray-400'} text-sm font-medium hover:bg-gray-700 transition cursor-pointer">
                                 ${game.away}
                             </button>
                             <span class="text-xs font-bold text-gray-600 uppercase tracking-widest px-1">at</span>
-                            <button id="btn-${game.id}-${game.home}" onclick="selectTeam('${game.id}', '${game.home}')" class="pick-btn w-28 py-2.5 rounded-lg border border-gray-700 ${currentPick.team === game.home ? 'border-2 border-yellow-500 bg-yellow-500/10 text-yellow-500 font-bold' : 'bg-gray-800 text-gray-400'} text-sm font-medium hover:bg-gray-700 transition cursor-pointer">
+                            <button onclick="selectTeam('${game.id}', '${game.home}')" class="pick-btn w-28 py-2.5 rounded-lg border border-gray-700 ${currentPick.team === game.home ? 'border-2 border-yellow-500 bg-yellow-500/10 text-yellow-500 font-bold' : 'bg-gray-800 text-gray-400'} text-sm font-medium hover:bg-gray-700 transition cursor-pointer">
                                 ${game.home}
                             </button>
-                            <select id="conf-${game.id}" onchange="updateConfidence('${game.id}', this.value)" class="bg-gray-800 border border-gray-600 rounded-lg px-2 py-2.5 text-yellow-400 font-bold text-xs focus:outline-none focus:border-yellow-500">
+                            <select onchange="updateConfidence('${game.id}', this.value)" class="bg-gray-800 border border-gray-600 rounded-lg px-2 py-2.5 text-yellow-400 font-bold text-xs focus:outline-none focus:border-yellow-500">
                                 ${optionsHtml}
                             </select>
                         </div>
@@ -485,13 +530,7 @@
             if (!currentUser) return;
             if (!userPicks[gameId]) userPicks[gameId] = {};
             userPicks[gameId].team = teamName;
-            
-            const game = sampleGames.find(g => g.id === gameId);
-            document.getElementById(`btn-${gameId}-${game.away}`).className = "pick-btn w-28 py-2.5 rounded-lg border border-gray-700 bg-gray-800 text-sm font-medium text-gray-400";
-            document.getElementById(`btn-${gameId}-${game.home}`).className = "pick-btn w-28 py-2.5 rounded-lg border border-gray-700 bg-gray-800 text-sm font-medium text-gray-400";
-            
-            const targetBtn = document.getElementById(`btn-${gameId}-${teamName}`);
-            targetBtn.className = "pick-btn w-28 py-2.5 rounded-lg border-2 border-yellow-500 bg-yellow-500/10 text-yellow-500 font-bold scale-102 transition";
+            renderMatchups();
         }
 
         function updateConfidence(gameId, val) {
@@ -519,7 +558,7 @@
             }
 
             if (db) {
-                const userRef = db.collection('users').doc(username);
+                const userRef = db.collection(`users_week_${currentWeek}`).doc(username);
                 userRef.get().then((doc) => {
                     if (doc.exists) {
                         if (doc.data().pin === pin) {
@@ -537,11 +576,7 @@
                 }).catch(err => alert("Firestore Connection Error: " + err.message));
             } else {
                 currentUser = username;
-                if(!sampleLeaderboard.some(u => u.username === username)) {
-                    sampleLeaderboard.push({ username, points: 0, tieBreaker: 0 });
-                }
                 updateAuthUI();
-                renderLeaderboard();
             }
         }
 
@@ -551,11 +586,14 @@
                 renderMatchups();
                 return;
             }
-            db.collection('picks').doc(currentUser).get().then((doc) => {
+            db.collection(`picks_week_${currentWeek}`).doc(currentUser).get().then((doc) => {
                 if (doc.exists) {
                     userPicks = doc.data().selections || {};
                     tieBreakerScore = doc.data().tieBreaker || "";
                     document.getElementById('tieBreakerInput').value = tieBreakerScore;
+                    if (Object.keys(userPicks).length > 0) {
+                        document.getElementById('downloadProofContainer').classList.remove('hidden');
+                    }
                 }
                 renderMatchups();
             });
@@ -568,6 +606,7 @@
             document.getElementById('usernameInput').value = '';
             document.getElementById('pinInput').value = '';
             document.getElementById('tieBreakerInput').value = '';
+            document.getElementById('downloadProofContainer').classList.add('hidden');
             updateAuthUI();
         }
 
@@ -603,66 +642,153 @@
                 assignedConfValues.add(pick.confidence);
             }
 
-            if (assignedConfValues.size !== 16) {
-                alert("Error: You must assign unique confidence values from 1 to 16 across your 16 games.");
+            if (assignedConfValues.size !== sampleGames.length) {
+                alert(`Error: You must assign unique confidence values from 1 to ${sampleGames.length} across your games.`);
                 return;
             }
 
-            // Calculate total points across all completed games upon submission
-            let calculatedTotalPoints = 0;
-            for (let game of sampleGames) {
-                if (game.winner) {
-                    const playerPick = userPicks[game.id];
-                    if (playerPick && playerPick.team && playerPick.team.toLowerCase() === game.winner.toLowerCase()) {
-                        calculatedTotalPoints += Number(playerPick.confidence || 0);
-                    }
-                }
-            }
-
             if (db) {
-                db.collection('picks').doc(currentUser).set({
+                db.collection(`picks_week_${currentWeek}`).doc(currentUser).set({
                     username: currentUser,
                     selections: userPicks,
                     tieBreaker: Number(tieBreakerScore),
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                 }).then(() => {
-                    return db.collection('users').doc(currentUser).set({
-                        username: currentUser,
-                        points: calculatedTotalPoints,
-                        tieBreaker: Number(tieBreakerScore)
-                    }, { merge: true });
-                }).then(() => {
-                    alert("Success! Your confidence picks and tie-breaker were safely uploaded.");
-                    logout();
+                    document.getElementById('downloadProofContainer').classList.remove('hidden');
+                    alert(`Success! Week ${currentWeek} picks safely uploaded. You can now download your verification proof below.`);
                 }).catch(err => alert("Error saving picks: " + err.message));
             } else {
-                const entry = sampleLeaderboard.find(u => u.username === currentUser);
-                if(entry) {
-                    entry.tieBreaker = Number(tieBreakerScore);
-                    entry.points = calculatedTotalPoints;
-                } else {
-                    sampleLeaderboard.push({ username: currentUser, points: calculatedTotalPoints, tieBreaker: Number(tieBreakerScore) });
-                }
-                sampleAllPicksSandbox[currentUser] = JSON.parse(JSON.stringify(userPicks));
-                
-                renderLeaderboard();
-                renderParticipantsList();
-                alert("Confidence picks saved locally in sandbox mode!");
-                logout();
+                document.getElementById('downloadProofContainer').classList.remove('hidden');
+                alert("Confidence picks saved locally in sandbox mode! Proof download is ready.");
             }
+        }
+
+        // --- PROOF EXPORT GENERATORS (.TXT & .JPG) ---
+        function getProofTextContent() {
+            let text = `========================================\n`;
+            text += `NFL CONFIDENCE POOL - SUBMISSION PROOF\n`;
+            text += `========================================\n`;
+            text += `Player: ${currentUser}\n`;
+            text += `Week: Week ${currentWeek}\n`;
+            text += `Submitted Timestamp: ${new Date().toUTCString()}\n`;
+            text += `Monday Night Tie-Breaker Points: ${tieBreakerScore || 'N/A'}\n`;
+            text += `----------------------------------------\n`;
+            text += `GAME PICKS & CONFIDENCE POINTS:\n`;
+            text += `----------------------------------------\n`;
+
+            sampleGames.forEach((game, idx) => {
+                const p = userPicks[game.id] || {};
+                const team = p.team || 'None';
+                const conf = p.confidence || '-';
+                text += `[G${idx+1}] ${game.away} @ ${game.home} => Pick: ${team} (Confidence: ${conf})\n`;
+            });
+            text += `========================================\n`;
+            return text;
+        }
+
+        function downloadPicksTxt() {
+            const textContent = getProofTextContent();
+            const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${currentUser}_Week_${currentWeek}_Picks_Proof.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function downloadPicksJpg() {
+            const canvas = document.getElementById('proofCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            const padding = 40;
+            const lineHeight = 28;
+            const headerHeight = 160;
+            const totalLines = sampleGames.length + 3;
+            
+            canvas.width = 650;
+            canvas.height = headerHeight + (totalLines * lineHeight) + padding;
+
+            // Background Fill
+            ctx.fillStyle = '#111827';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Border Header Box
+            ctx.fillStyle = '#1f2937';
+            ctx.fillRect(padding, padding, canvas.width - (padding * 2), 110);
+            ctx.strokeStyle = '#374151';
+            ctx.strokeRect(padding, padding, canvas.width - (padding * 2), 110);
+
+            // Title & Meta
+            ctx.fillStyle = '#f59e0b';
+            ctx.font = 'bold 20px sans-serif';
+            ctx.fillText('🏈 NFL CONFIDENCE POOL - OFFICIAL RECEIPT', padding + 20, padding + 35);
+
+            ctx.fillStyle = '#9ca3af';
+            ctx.font = '13px sans-serif';
+            ctx.fillText(`Player: ${currentUser}  |  Week ${currentWeek}`, padding + 20, padding + 65);
+            ctx.fillText(`MNF Tie-Breaker Points: ${tieBreakerScore || 'N/A'}`, padding + 20, padding + 90);
+
+            // Table Content Header
+            let startY = padding + 140;
+            ctx.fillStyle = '#f3f4f6';
+            ctx.font = 'bold 13px sans-serif';
+            ctx.fillText('Game Matchup', padding + 10, startY);
+            ctx.fillText('Selected Winner', padding + 270, startY);
+            ctx.fillText('Conf Pts', padding + 460, startY);
+
+            startY += 10;
+            ctx.strokeStyle = '#374151';
+            ctx.beginPath();
+            ctx.moveTo(padding, startY);
+            ctx.lineTo(canvas.width - padding, startY);
+            ctx.stroke();
+
+            // Rows Loop
+            startY += 25;
+            ctx.font = '13px sans-serif';
+            sampleGames.forEach((game, idx) => {
+                const p = userPicks[game.id] || {};
+                const matchupStr = `G${idx+1}: ${game.away} @ ${game.home}`;
+                const pickStr = p.team || 'None';
+                const confStr = `${p.confidence || '-'} Pts`;
+
+                ctx.fillStyle = '#9ca3af';
+                ctx.fillText(matchupStr, padding + 10, startY);
+
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 13px sans-serif';
+                ctx.fillText(pickStr, padding + 270, startY);
+
+                ctx.fillStyle = '#f59e0b';
+                ctx.fillText(confStr, padding + 460, startY);
+                ctx.font = '13px sans-serif';
+
+                startY += lineHeight;
+            });
+
+            // Trigger Download
+            const dataURL = canvas.toDataURL('image/jpeg', 0.9);
+            const a = document.createElement('a');
+            a.href = dataURL;
+            a.download = `${currentUser}_Week_${currentWeek}_Picks_Proof.jpg`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
         }
 
         function renderLeaderboardFromSnapshot(snapshot) {
             const tbody = document.getElementById('leaderboardBody');
             const countBadge = document.getElementById('participantCountBadge');
-
             countBadge.innerText = `${snapshot.size} Total Player${snapshot.size === 1 ? '' : 's'}`;
 
             let index = 1;
             const top3Docs = snapshot.docs.slice(0, 3);
             
             if (top3Docs.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-gray-500 text-xs">No standings available yet.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-gray-500 text-xs">No standings available yet for Week ${currentWeek}.</td></tr>`;
                 return;
             }
 
@@ -675,11 +801,8 @@
         function renderLeaderboard() {
             const tbody = document.getElementById('leaderboardBody');
             const countBadge = document.getElementById('participantCountBadge');
-
-            countBadge.innerText = `${sampleLeaderboard.length} Total Player${sampleLeaderboard.length === 1 ? '' : 's'}`;
-            let index = 1;
-            const sorted = [...sampleLeaderboard].sort((a, b) => b.points - a.points).slice(0, 3);
-            tbody.innerHTML = sorted.map(user => renderRow(index++, user.username, user.points, user.tieBreaker)).join('');
+            countBadge.innerText = `0 Total Players`;
+            tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-gray-500 text-xs">No standings available yet.</td></tr>`;
         }
 
         function renderRow(rank, name, points, tieBreaker) {
