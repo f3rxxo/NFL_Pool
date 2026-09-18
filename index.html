@@ -101,15 +101,10 @@
                     </div>
 
                     <div class="mt-6 pt-4 border-t border-gray-700 flex flex-col sm:flex-row justify-between items-center gap-4">
-                        <!-- DOWNLOAD PROOF BUTTONS (Enabled after submission or loading active picks) -->
                         <div id="downloadProofContainer" class="flex items-center gap-2 hidden">
                             <span class="text-xs text-gray-400 font-medium">📥 Download Proof:</span>
-                            <button onclick="downloadPicksTxt()" class="bg-gray-700 hover:bg-gray-600 text-gray-200 text-xs font-bold px-3 py-2 rounded-lg transition cursor-pointer flex items-center gap-1">
-                                📄 .TXT
-                            </button>
-                            <button onclick="downloadPicksJpg()" class="bg-gray-700 hover:bg-gray-600 text-gray-200 text-xs font-bold px-3 py-2 rounded-lg transition cursor-pointer flex items-center gap-1">
-                                🖼️ .JPG
-                            </button>
+                            <button onclick="downloadPicksTxt()" class="bg-gray-700 hover:bg-gray-600 text-gray-200 text-xs font-bold px-3 py-2 rounded-lg transition cursor-pointer">📄 .TXT</button>
+                            <button onclick="downloadPicksJpg()" class="bg-gray-700 hover:bg-gray-600 text-gray-200 text-xs font-bold px-3 py-2 rounded-lg transition cursor-pointer">🖼️ .JPG</button>
                         </div>
                         <div class="w-full sm:w-auto flex justify-end">
                             <button id="submitPicksBtn" onclick="submitPicks()" class="bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold px-8 py-3 rounded-lg shadow-lg shadow-yellow-500/25 active:scale-95 transition duration-200 cursor-pointer">
@@ -180,11 +175,10 @@
 
     </main>
 
-    <!-- Hidden canvas used for generating high-res JPG proof downloads -->
     <canvas id="proofCanvas" class="hidden"></canvas>
 
     <script>
-         // 🔒 SECURE CONFIGURATION (HIDDEN SECRETS)
+          // 🔒 SECURE CONFIGURATION (HIDDEN SECRETS)
         const firebaseConfig = {
             apiKey: "AIzaSyBpLXiQn_7XIZbJ38uV_-PwTkIQFSqUraQ",
             authDomain: "juicyo-rotation.firebaseapp.com",
@@ -209,7 +203,7 @@
         let firstGameKickoffTimestamp = null;
         let countdownInterval = null;
 
-        const FORCE_TEST_MODE = false; 
+        const FORCE_TEST_MODE = true; 
 
         window.onload = function() {
             fetchScheduleForWeek(currentWeek);
@@ -274,6 +268,9 @@
 
             renderMatchups();
             if (currentUser) loadUserPicks();
+            
+            // Automatically poll live scores from ESPN API to update standings
+            checkAndUpdateCompletedGames();
         }
 
         function loadFallbackGames(weekNum) {
@@ -328,6 +325,79 @@
             }, 1000);
         }
 
+        // Fetch latest ESPN scores and update score calculations automatically
+        async function checkAndUpdateCompletedGames() {
+            try {
+                const response = await fetch(`https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?week=${currentWeek}&seasontype=2`);
+                const data = await response.json();
+                
+                let scoresChanged = false;
+                if (data && data.events) {
+                    data.events.forEach(event => {
+                        const competition = event.competitions[0];
+                        if (competition.status.type.completed) {
+                            const competitors = competition.competitors;
+                            const homeTeamObj = competitors.find(c => c.homeAway === 'home');
+                            const awayTeamObj = competitors.find(c => c.homeAway === 'away');
+                            
+                            const homeTeamName = homeTeamObj.team.shortDisplayName || homeTeamObj.team.name;
+                            const awayTeamName = awayTeamObj.team.shortDisplayName || awayTeamObj.team.name;
+                            const winningTeam = homeTeamObj.winner ? homeTeamName : awayTeamName;
+
+                            // Match precisely against stored game elements
+                            const matchedGame = sampleGames.find(g => 
+                                g.home.toLowerCase() === homeTeamName.toLowerCase() || 
+                                g.away.toLowerCase() === awayTeamName.toLowerCase() ||
+                                homeTeamName.toLowerCase().includes(g.home.toLowerCase()) ||
+                                awayTeamName.toLowerCase().includes(g.away.toLowerCase())
+                            );
+
+                            if (matchedGame && matchedGame.winner !== winningTeam) {
+                                matchedGame.winner = winningTeam;
+                                scoresChanged = true;
+                            }
+                        }
+                    });
+                }
+
+                if (scoresChanged && db) {
+                    recalculateAllUserScoresInFirestore();
+                }
+            } catch (err) {
+                console.log("Automated API score check background warning: ", err);
+            }
+        }
+
+        function recalculateAllUserScoresInFirestore() {
+            if (!db) return;
+
+            db.collection(`picks_week_${currentWeek}`).get().then((snapshot) => {
+                snapshot.docs.forEach(docSnap => {
+                    const playerData = docSnap.data();
+                    const username = playerData.username;
+                    const selections = playerData.selections || {};
+
+                    let totalPointsEarned = 0;
+                    sampleGames.forEach(game => {
+                        if (game.winner) {
+                            const userPick = selections[game.id];
+                            if (userPick && userPick.team) {
+                                const picked = userPick.team.trim().toLowerCase();
+                                const actualWinner = game.winner.trim().toLowerCase();
+                                if (picked === actualWinner || actualWinner.includes(picked) || picked.includes(actualWinner)) {
+                                    totalPointsEarned += Number(userPick.confidence || 0);
+                                }
+                            }
+                        }
+                    });
+
+                    db.collection(`users_week_${currentWeek}`).doc(username).set({
+                        points: totalPointsEarned
+                    }, { merge: true });
+                });
+            });
+        }
+
         function switchTab(tabName) {
             const viewMatchups = document.getElementById('viewMatchups');
             const viewAllPicks = document.getElementById('viewAllPicks');
@@ -362,13 +432,15 @@
                         const data = doc.data();
                         allParticipantsPicks[data.username] = data.selections || {};
                     });
+                    recalculateAllUserScoresInFirestore();
                     renderParticipantsList();
                     if (!document.getElementById('viewAllPicks').classList.contains('hidden')) {
                         renderAllPicksMatrix();
                     }
                 });
 
-                db.collection(`users_week_${currentWeek}`).orderBy('points', 'desc').onSnapshot((snapshot) => {
+                // Listen to users collection and sort locally to avoid index creation errors
+                db.collection(`users_week_${currentWeek}`).onSnapshot((snapshot) => {
                     renderLeaderboardFromSnapshot(snapshot);
                 });
             } else {
@@ -460,7 +532,7 @@
                         let winnerStyle = isHome ? 'bg-blue-500/20 text-blue-300' : 'bg-purple-500/20 text-purple-300';
                         
                         if (game.winner) {
-                            if (pickedTeam.toLowerCase() === game.winner.toLowerCase()) {
+                            if (pickedTeam.toLowerCase() === game.winner.toLowerCase() || game.winner.toLowerCase().includes(pickedTeam.toLowerCase())) {
                                 winnerStyle = 'bg-green-500/30 text-green-300 border-2 border-green-500 font-bold';
                             } else {
                                 winnerStyle = 'bg-gray-800 text-gray-500 line-through opacity-50';
@@ -506,8 +578,7 @@
                     <div class="bg-gray-900 border ${game.isMNF ? 'border-yellow-500/50 bg-yellow-500/5' : 'border-gray-700/60'} rounded-xl p-4 flex flex-col sm:flex-row justify-between items-center gap-4 transition duration-150 hover:border-gray-600">
                         <div class="text-center sm:text-left">
                             <span class="text-xs font-semibold text-gray-500 uppercase">Game ${idx+1} • ${game.time}</span>
-                            ${game.isFirstGame ? '<span class="ml-2 bg-blue-500/20 text-blue-400 text-[10px] font-bold px-2 py-0.5 rounded">WEEK OPENER</span>' : ''}
-                            ${game.isMNF ? '<span class="ml-2 bg-yellow-500/20 text-yellow-400 text-[10px] font-bold px-2 py-0.5 rounded">TIE-BREAKER</span>' : ''}
+                            ${game.winner ? `<span class="ml-2 bg-green-500/20 text-green-400 text-[10px] font-bold px-2 py-0.5 rounded">FINAL: ${game.winner} Won</span>` : ''}
                         </div>
                         <div class="flex items-center gap-3 w-full sm:w-auto justify-center">
                             <button onclick="selectTeam('${game.id}', '${game.away}')" class="pick-btn w-28 py-2.5 rounded-lg border border-gray-700 ${currentPick.team === game.away ? 'border-2 border-yellow-500 bg-yellow-500/10 text-yellow-500 font-bold' : 'bg-gray-800 text-gray-400'} text-sm font-medium hover:bg-gray-700 transition cursor-pointer">
@@ -647,6 +718,20 @@
                 return;
             }
 
+            let calculatedTotalPoints = 0;
+            for (let game of sampleGames) {
+                if (game.winner) {
+                    const playerPick = userPicks[game.id];
+                    if (playerPick && playerPick.team) {
+                        const picked = playerPick.team.trim().toLowerCase();
+                        const actualWinner = game.winner.trim().toLowerCase();
+                        if (picked === actualWinner || actualWinner.includes(picked) || picked.includes(actualWinner)) {
+                            calculatedTotalPoints += Number(playerPick.confidence || 0);
+                        }
+                    }
+                }
+            }
+
             if (db) {
                 db.collection(`picks_week_${currentWeek}`).doc(currentUser).set({
                     username: currentUser,
@@ -654,17 +739,24 @@
                     tieBreaker: Number(tieBreakerScore),
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                 }).then(() => {
+                    return db.collection(`users_week_${currentWeek}`).doc(currentUser).set({
+                        username: currentUser,
+                        points: calculatedTotalPoints,
+                        tieBreaker: Number(tieBreakerScore)
+                    }, { merge: true });
+                }).then(() => {
                     document.getElementById('downloadProofContainer').classList.remove('hidden');
-                    alert(`Success! Week ${currentWeek} picks safely uploaded. You can now download your verification proof below.`);
+                    alert(`Success! Week ${currentWeek} picks uploaded and scores synced.`);
+                    logout();
                 }).catch(err => alert("Error saving picks: " + err.message));
             } else {
                 document.getElementById('downloadProofContainer').classList.remove('hidden');
-                alert("Confidence picks saved locally in sandbox mode! Proof download is ready.");
+                alert("Confidence picks saved locally in sandbox mode!");
+                logout();
             }
         }
 
-        // --- PROOF EXPORT GENERATORS (.TXT & .JPG) ---
-        function getProofTextContent() {
+        function downloadPicksTxt() {
             let text = `========================================\n`;
             text += `NFL CONFIDENCE POOL - SUBMISSION PROOF\n`;
             text += `========================================\n`;
@@ -683,12 +775,8 @@
                 text += `[G${idx+1}] ${game.away} @ ${game.home} => Pick: ${team} (Confidence: ${conf})\n`;
             });
             text += `========================================\n`;
-            return text;
-        }
 
-        function downloadPicksTxt() {
-            const textContent = getProofTextContent();
-            const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
+            const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
@@ -711,17 +799,14 @@
             canvas.width = 650;
             canvas.height = headerHeight + (totalLines * lineHeight) + padding;
 
-            // Background Fill
             ctx.fillStyle = '#111827';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // Border Header Box
             ctx.fillStyle = '#1f2937';
             ctx.fillRect(padding, padding, canvas.width - (padding * 2), 110);
             ctx.strokeStyle = '#374151';
             ctx.strokeRect(padding, padding, canvas.width - (padding * 2), 110);
 
-            // Title & Meta
             ctx.fillStyle = '#f59e0b';
             ctx.font = 'bold 20px sans-serif';
             ctx.fillText('🏈 NFL CONFIDENCE POOL - OFFICIAL RECEIPT', padding + 20, padding + 35);
@@ -731,7 +816,6 @@
             ctx.fillText(`Player: ${currentUser}  |  Week ${currentWeek}`, padding + 20, padding + 65);
             ctx.fillText(`MNF Tie-Breaker Points: ${tieBreakerScore || 'N/A'}`, padding + 20, padding + 90);
 
-            // Table Content Header
             let startY = padding + 140;
             ctx.fillStyle = '#f3f4f6';
             ctx.font = 'bold 13px sans-serif';
@@ -746,7 +830,6 @@
             ctx.lineTo(canvas.width - padding, startY);
             ctx.stroke();
 
-            // Rows Loop
             startY += 25;
             ctx.font = '13px sans-serif';
             sampleGames.forEach((game, idx) => {
@@ -769,7 +852,6 @@
                 startY += lineHeight;
             });
 
-            // Trigger Download
             const dataURL = canvas.toDataURL('image/jpeg', 0.9);
             const a = document.createElement('a');
             a.href = dataURL;
@@ -779,21 +861,29 @@
             document.body.removeChild(a);
         }
 
+        // Render leaderboard by sorting documents locally in JS (bypassing strict Firestore composite index requirements)
         function renderLeaderboardFromSnapshot(snapshot) {
             const tbody = document.getElementById('leaderboardBody');
             const countBadge = document.getElementById('participantCountBadge');
             countBadge.innerText = `${snapshot.size} Total Player${snapshot.size === 1 ? '' : 's'}`;
 
-            let index = 1;
-            const top3Docs = snapshot.docs.slice(0, 3);
-            
-            if (top3Docs.length === 0) {
+            if (snapshot.size === 0) {
                 tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-gray-500 text-xs">No standings available yet for Week ${currentWeek}.</td></tr>`;
                 return;
             }
 
-            tbody.innerHTML = top3Docs.map(doc => {
-                const data = doc.data();
+            let playersList = [];
+            snapshot.docs.forEach(doc => {
+                playersList.push(doc.data());
+            });
+
+            // Sort locally descending by points, and ascending by tie-breaker as fallback
+            playersList.sort((a, b) => (b.points || 0) - (a.points || 0));
+
+            let index = 1;
+            const top3Players = playersList.slice(0, 3);
+
+            tbody.innerHTML = top3Players.map(data => {
                 return renderRow(index++, data.username, data.points || 0, data.tieBreaker);
             }).join('');
         }
