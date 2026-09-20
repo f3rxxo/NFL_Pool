@@ -472,82 +472,110 @@
         }
 
         function renderAllPicksMatrix() {
-            const container = document.getElementById('allPicksMatrixContainer');
-            const badge = document.getElementById('visibilityBadge');
-            const lockIndicator = document.getElementById('lockStatusIndicator');
-            const unlocked = hasFirstGameStarted();
+          const container = document.getElementById('allPicksMatrixContainer');
+          const badge = document.getElementById('visibilityBadge');
+          const lockIndicator = document.getElementById('lockStatusIndicator');
 
-            if (!unlocked) {
-                badge.className = "bg-red-500/25 text-red-400 text-xs font-semibold px-3 py-1 rounded-full border border-red-500/30";
-                badge.innerText = "Hidden Until Kickoff";
-                lockIndicator.className = "text-xs bg-red-500/20 text-red-400 px-1.5 py-0.5 rounded ml-1";
-                lockIndicator.innerText = "Locked";
-                
-                container.innerHTML = `
-                    <div class="text-center py-12 text-gray-400">
-                        <p class="text-lg font-semibold text-gray-300 mb-2">🔒 Confidential Confidence Rankings</p>
-                        <p class="text-sm">All players' picks and assigned points reveal automatically at kickoff!</p>
-                    </div>
-                `;
-                return;
-            }
+          const unlocked = hasFirstGameStarted();
 
-            badge.className = "bg-green-500/25 text-green-400 text-xs font-semibold px-3 py-1 rounded-full border border-green-500/30";
-            badge.innerText = "Unlocked & Visible";
-            lockIndicator.className = "text-xs bg-green-500/20 text-green-400 px-1.5 py-0.5 rounded ml-1";
-            lockIndicator.innerText = "Live";
-
-            const players = Object.keys(allParticipantsPicks);
-            if (players.length === 0) {
-                container.innerHTML = `<p class="text-sm text-gray-400 py-6 text-center">No player picks submitted yet.</p>`;
-                return;
-            }
-
-            let html = `
-                <table class="w-full text-left border-collapse text-xs">
-                    <thead>
-                        <tr class="bg-gray-700 text-gray-300 uppercase tracking-wider">
-                            <th class="p-3 sticky left-0 bg-gray-700 z-10 border-b border-gray-600">Player</th>
+          if (!unlocked) {
+            badge.className = "bg-red-500/25 text-red-400 text-xs font-semibold px-3 py-1 rounded-full border border-red-500/30";
+            badge.innerText = "Hidden Until Kickoff";
+            lockIndicator.className = "text-xs bg-red-500/20 text-red-400 px-1.5 py-0.5 rounded ml-1";
+            lockIndicator.innerText = "Locked";
+        
+            container.innerHTML = `
+              <div class="text-center py-12 text-gray-400">
+                <p class="text-lg font-semibold text-gray-300 mb-2">🔒 Confidential Confidence Rankings</p>
+                <p class="text-sm">All players' picks and assigned points reveal automatically at kickoff!</p>
+              </div>
             `;
-
-            sampleGames.forEach((g, idx) => {
-                html += `<th class="p-3 text-center border-b border-gray-600 whitespace-nowrap">G${idx+1}<br><span class="text-[10px] text-gray-400 font-normal">${g.away.substring(0,3)}@${g.home.substring(0,3)}</span></th>`;
-            });
-
-            html += `</tr></thead><tbody class="divide-y divide-gray-700">`;
-
-            players.forEach(player => {
-                const picks = allParticipantsPicks[player] || {};
-                html += `
-                    <tr class="hover:bg-gray-700/40 transition">
-                        <td class="p-3 font-bold text-yellow-500 sticky left-0 bg-gray-800 z-10 whitespace-nowrap">${player}</td>
-                `;
-                sampleGames.forEach(game => {
-                    const pickObj = picks[game.id];
-                    let cellDisplay = `<span class="text-gray-600">-</span>`;
-                    if (pickObj && pickObj.team) {
-                        const pickedTeam = pickObj.team;
-                        const conf = pickObj.confidence || 0;
-                        const isHome = pickedTeam === game.home;
-                        let winnerStyle = isHome ? 'bg-blue-500/20 text-blue-300' : 'bg-purple-500/20 text-purple-300';
-                        
-                        if (game.winner) {
-                            if (pickedTeam.toLowerCase() === game.winner.toLowerCase() || game.winner.toLowerCase().includes(pickedTeam.toLowerCase())) {
-                                winnerStyle = 'bg-green-500/30 text-green-300 border-2 border-green-500 font-bold';
-                            } else {
-                                winnerStyle = 'bg-gray-800 text-gray-500 line-through opacity-50';
-                            }
-                        }
-                        cellDisplay = `<span class="px-2 py-1 rounded font-medium ${winnerStyle}">${pickedTeam} <b class="text-yellow-400 font-mono">(${conf})</b></span>`;
-                    }
-                    html += `<td class="p-3 text-center whitespace-nowrap">${cellDisplay}</td>`;
-                });
-                html += `</tr>`;
-            });
-
-            html += `</tbody></table>`;
-            container.innerHTML = html;
+            return;
         }
+
+         badge.className = "bg-green-500/25 text-green-400 text-xs font-semibold px-3 py-1 rounded-full border border-green-500/30";
+        badge.innerText = "Unlocked & Visible";
+        lockIndicator.className = "text-xs bg-green-500/20 text-green-400 px-1.5 py-0.5 rounded ml-1";
+        lockIndicator.innerText = "Live";
+
+        const players = Object.keys(allParticipantsPicks);
+        if (players.length === 0) {
+          container.innerHTML = `<p class="text-sm text-gray-400 py-6 text-center">No player picks submitted yet.</p>`;
+          return;
+        }
+
+    // Ensure sampleGames exists
+        if (!sampleGames || sampleGames.length === 0) {
+          container.innerHTML = `<p class="text-sm text-gray-400 py-6 text-center">Schedule loading...</p>`;
+          return;
+        }
+
+    // --- NEW LOGIC STARTS HERE ---
+    // Build Header Row (This defines the static order of columns)
+        let headerHtml = `
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+                <tr class="bg-gray-700 text-gray-300 uppercase tracking-wider">
+                    <th class="p-3 sticky left-0 bg-gray-700 z-10 border-b border-gray-600">Player</th>
+        `;
+
+    // Create headers based on the game objects' IDs (G1, G2, G3, etc.)
+        sampleGames.forEach((g, idx) => {
+          const matchupLabel = (g.away && g.home) ? `${g.away.substring(0,3)}@${g.home.substring(0,3)}` : 'Matchup';
+        headerHtml += `<th class="p-3 text-center border-b border-gray-600 whitespace-nowrap">G${idx+1}<br><span class="text-[10px] text-gray-400 font-normal">${matchupLabel}</span></th>`;
+        });
+
+        headerHtml += `</tr></thead><tbody class="divide-y divide-gray-700">`;
+
+    // Build Data Rows
+        let bodyHtml = '';
+        players.forEach(player => {
+        // Get the specific picks object for this player
+          const playerPicks = allParticipantsPicks[player] || {};
+        
+          bodyHtml += `
+            <tr class="hover:bg-gray-700/40 transition">
+                <td class="p-3 font-bold text-yellow-500 sticky left-0 bg-gray-800 z-10 whitespace-nowrap">${player}</td>
+          `;
+
+        // Loop through sampleGames again to fill cells, using the game ID as reference
+          sampleGames.forEach(game => {
+            const gameId = game.id;
+            // Access the pick for THIS specific game ID, regardless of its current index in the array
+            const pickObj = playerPicks[gameId];
+            
+            let cellDisplay = `<span class="text-gray-600">-</span>`;
+
+            // If the player made a pick for this game ID
+            if (pickObj && pickObj.team) {
+                const pickedTeam = pickObj.team;
+                const conf = pickObj.confidence || 0;
+                const isHome = (pickedTeam === game.home);
+                
+                let winnerStyle = isHome ? 'bg-blue-500/20 text-blue-300' : 'bg-purple-500/20 text-purple-300';
+                
+                // Apply styling based on whether the game has finished and the pick was correct
+                if (game.winner) {
+                    if (pickedTeam.toLowerCase() === game.winner.toLowerCase()) {
+                        winnerStyle = 'bg-green-500/30 text-green-300 border-2 border-green-500 font-bold';
+                    } else {
+                        winnerStyle = 'bg-gray-800 text-gray-500 line-through opacity-50';
+                    }
+                }
+                
+                cellDisplay = `<span class="px-2 py-1 rounded font-medium ${winnerStyle}">${pickedTeam} <b class="text-yellow-400 font-mono">(${conf})</b></span>`;
+            }
+
+            bodyHtml += `<td class="p-3 text-center whitespace-nowrap">${cellDisplay}</td>`;
+        });
+
+        bodyHtml += `</tr>`;
+    });
+
+    // Combine headers and body
+    container.innerHTML = headerHtml + bodyHtml + `</tbody></table>`;
+    // --- NEW LOGIC ENDS HERE ---
+}
 
         function renderMatchups() {
             const container = document.getElementById('matchupsContainer');
