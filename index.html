@@ -219,7 +219,7 @@
     <canvas id="proofCanvas" class="hidden"></canvas>
 
     <script>
-        // 🔒 SECURE CONFIGURATION (HIDDEN SECRETS)
+         // 🔒 SECURE CONFIGURATION (HIDDEN SECRETS)
         const firebaseConfig = {
             apiKey: "AIzaSyBpLXiQn_7XIZbJ38uV_-PwTkIQFSqUraQ",
             authDomain: "juicyo-rotation.firebaseapp.com",
@@ -234,7 +234,6 @@
             firebase.initializeApp(firebaseConfig);
             db = firebase.firestore();
         }
-
         let currentUser = null;
         let currentWeek = 2;         
         let sampleGames = [];        
@@ -253,6 +252,11 @@
             updateAuthUI();
             initRealtimeListeners();
         };
+
+        // Stable matchup identifier key builder
+        function getGameKey(game) {
+            return `${game.away}_vs_${game.home}`.toLowerCase().replace(/[^a-z0-9_]/g, '');
+        }
 
         async function fetchScheduleForWeek(weekNum) {
             currentWeek = weekNum;
@@ -416,7 +420,8 @@
                     let totalPointsEarned = 0;
                     sampleGames.forEach(game => {
                         if (game.winner) {
-                            const userPick = selections[game.id];
+                            const gameKey = getGameKey(game);
+                            const userPick = selections[gameKey];
                             if (userPick && userPick.team) {
                                 const picked = userPick.team.trim().toLowerCase();
                                 const actualWinner = game.winner.trim().toLowerCase();
@@ -567,8 +572,8 @@
                 `;
 
                 sampleGames.forEach(game => {
-                    const gameId = game.id;
-                    const pickObj = playerPicks[gameId];
+                    const gameKey = getGameKey(game);
+                    const pickObj = playerPicks[gameKey];
                     let cellDisplay = `<span class="text-gray-600">-</span>`;
 
                     if (pickObj && pickObj.team) {
@@ -606,13 +611,14 @@
             }
 
             container.innerHTML = sampleGames.map((game, idx) => {
-                const currentPick = userPicks[game.id] || {};
+                const gameKey = getGameKey(game);
+                const currentPick = userPicks[gameKey] || {};
                 const currentConfidence = currentPick.confidence || "";
 
                 const usedConfidenceValues = new Set();
-                for (let gId in userPicks) {
-                    if (gId !== game.id && userPicks[gId].confidence) {
-                        usedConfidenceValues.add(Number(userPicks[gId].confidence));
+                for (let gKey in userPicks) {
+                    if (gKey !== gameKey && userPicks[gKey].confidence) {
+                        usedConfidenceValues.add(Number(userPicks[gKey].confidence));
                     }
                 }
 
@@ -633,14 +639,14 @@
                             ${game.winner ? `<span class="mt-1 bg-green-950 text-green-300 border border-green-800 text-[10px] font-bold px-2.5 py-0.5 rounded-full w-fit mx-auto lg:mx-0">FINAL: ${game.winner} Won</span>` : ''}
                         </div>
                         <div class="flex items-center gap-3 w-full lg:w-auto justify-center flex-wrap sm:flex-nowrap">
-                            <button onclick="selectTeam('${game.id}', '${game.away}')" class="pick-btn w-32 py-3 rounded-xl border border-gray-700 bg-gray-800 text-gray-300 text-sm font-semibold hover:bg-gray-700 transition cursor-pointer ${isAwaySelected ? 'selected' : ''}">
+                            <button onclick="selectTeam('${gameKey}', '${game.away}')" class="pick-btn w-32 py-3 rounded-xl border border-gray-700 bg-gray-800 text-gray-300 text-sm font-semibold hover:bg-gray-700 transition cursor-pointer ${isAwaySelected ? 'selected' : ''}">
                                 ${game.away}
                             </button>
                             <span class="text-xs font-bold text-gray-500 uppercase tracking-widest px-1">at</span>
-                            <button onclick="selectTeam('${game.id}', '${game.home}')" class="pick-btn w-32 py-3 rounded-xl border border-gray-700 bg-gray-800 text-gray-300 text-sm font-semibold hover:bg-gray-700 transition cursor-pointer ${isHomeSelected ? 'selected' : ''}">
+                            <button onclick="selectTeam('${gameKey}', '${game.home}')" class="pick-btn w-32 py-3 rounded-xl border border-gray-700 bg-gray-800 text-gray-300 text-sm font-semibold hover:bg-gray-700 transition cursor-pointer ${isHomeSelected ? 'selected' : ''}">
                                 ${game.home}
                             </button>
-                            <select onchange="updateConfidence('${game.id}', this.value)" class="bg-gray-800 border border-gray-600 rounded-xl px-3 py-3 text-yellow-400 font-bold text-xs focus:outline-none focus:ring-1 focus:ring-yellow-500 cursor-pointer">
+                            <select onchange="updateConfidence('${gameKey}', this.value)" class="bg-gray-800 border border-gray-600 rounded-xl px-3 py-3 text-yellow-400 font-bold text-xs focus:outline-none focus:ring-1 focus:ring-yellow-500 cursor-pointer">
                                 ${optionsHtml}
                             </select>
                         </div>
@@ -649,20 +655,20 @@
             }).join('');
         }
 
-        function selectTeam(gameId, teamName) {
+        function selectTeam(gameKey, teamName) {
             if (!currentUser) return;
-            if (!userPicks[gameId]) userPicks[gameId] = {};
-            userPicks[gameId].team = teamName;
+            if (!userPicks[gameKey]) userPicks[gameKey] = {};
+            userPicks[gameKey].team = teamName;
             renderMatchups();
         }
 
-        function updateConfidence(gameId, val) {
+        function updateConfidence(gameKey, val) {
             if (!currentUser) return;
-            if (!userPicks[gameId]) userPicks[gameId] = {};
+            if (!userPicks[gameKey]) userPicks[gameKey] = {};
             if (val === "") {
-                delete userPicks[gameId].confidence;
+                delete userPicks[gameKey].confidence;
             } else {
-                userPicks[gameId].confidence = Number(val);
+                userPicks[gameKey].confidence = Number(val);
             }
             renderMatchups();
         }
@@ -783,7 +789,8 @@
             
             const assignedConfValues = new Set();
             for (let game of sampleGames) {
-                const pick = userPicks[game.id];
+                const gameKey = getGameKey(game);
+                const pick = userPicks[gameKey];
                 if (!pick || !pick.team || !pick.confidence) {
                     alert(`Incomplete selections: Please make sure every game has both a winning team and a confidence point value assigned.`);
                     return;
@@ -799,7 +806,8 @@
             let calculatedTotalPoints = 0;
             for (let game of sampleGames) {
                 if (game.winner) {
-                    const playerPick = userPicks[game.id];
+                    const gameKey = getGameKey(game);
+                    const playerPick = userPicks[gameKey];
                     if (playerPick && playerPick.team) {
                         const picked = playerPick.team.trim().toLowerCase();
                         const actualWinner = game.winner.trim().toLowerCase();
