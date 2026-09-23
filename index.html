@@ -47,7 +47,7 @@
         </button>
         <button onclick="switchTab('allPicks')" id="tabAllPicks" class="px-6 py-3 font-bold text-sm rounded-t-lg border-t border-x border-transparent text-gray-400 hover:text-gray-200 transition-all duration-150 cursor-pointer flex items-center gap-2">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
-            Live Leaderboard
+            Live Leaderboard & History
             <span id="lockStatusIndicator" class="text-xs bg-red-900 text-red-300 px-2 py-0.5 rounded-full ml-1 font-mono hidden">LOCKED</span>
         </button>
     </div>
@@ -62,11 +62,11 @@
                 <div id="authCard" class="bg-gray-800 border border-gray-700 rounded-2xl p-8 shadow-xl">
                     <h2 class="text-2xl font-bold mb-4 flex items-center gap-3 text-yellow-400">
                         <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path></svg>
-                        Player Sign-In
+                        Player Sign-In / Week Registration
                     </h2>
-                    <p class="text-sm text-gray-400 mb-6 max-w-2xl">Welcome! Enter a unique username and any 4-digit PIN code to join the pool or sign back in. No email is required.</p>
+                    <p class="text-sm text-gray-400 mb-6 max-w-2xl">Enter your username and any 4-digit PIN code. You can use your existing PIN or set a new 4-digit PIN for this active week.</p>
                     <div class="flex flex-col sm:flex-row gap-4 bg-gray-900 p-5 rounded-xl border border-gray-700">
-                        <input type="text" id="usernameInput" placeholder="Choose a Username (e.g., Debbie)" class="bg-gray-800 border border-gray-600 rounded-lg px-5 py-3 text-white focus:outline-none focus:ring-2 focus:ring-yellow-500 flex-1 text-lg" autocomplete="off">
+                        <input type="text" id="usernameInput" placeholder="Username (e.g., Debbie)" class="bg-gray-800 border border-gray-600 rounded-lg px-5 py-3 text-white focus:outline-none focus:ring-2 focus:ring-yellow-500 flex-1 text-lg" autocomplete="off">
                         <input type="password" id="pinInput" placeholder="4-Digit PIN" maxlength="4" class="bg-gray-800 border border-gray-600 rounded-lg px-5 py-3 text-white focus:outline-none focus:ring-2 focus:ring-yellow-500 w-full sm:w-32 text-center tracking-[.5em] font-mono text-lg" autocomplete="off">
                         <button onclick="handleAuth()" class="bg-yellow-500 hover:bg-yellow-400 text-gray-950 font-extrabold px-8 py-3 rounded-lg transition duration-150 cursor-pointer text-lg flex items-center justify-center gap-2 group">
                             Sign In / Join
@@ -170,15 +170,37 @@
         <!-- VIEW 2: ALL PLAYERS & LEADERBOARD -->
         <div id="viewAllPicks" class="hidden space-y-8">
             <div class="bg-gray-800 border border-gray-700 rounded-2xl p-8 shadow-xl">
-                <div class="flex justify-between items-center mb-6 pb-4 border-b border-gray-700">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 pb-4 border-b border-gray-700">
                     <div>
                         <h2 class="text-2xl font-bold flex items-center gap-3 text-yellow-400">
                             <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path></svg>
-                            Top 3 Podium Standings
+                            Podium Standings & Past Winners
                         </h2>
-                        <p class="text-sm text-gray-400 mt-1">Players ranked live by total confidence points accumulated from all completed game predictions.</p>
+                        <p class="text-sm text-gray-400 mt-1">Review live standings for the selected week or check out previous week winners.</p>
                     </div>
-                    <span id="participantCountBadge" class="bg-gray-700 text-yellow-400 text-xs font-bold px-3 py-1.5 rounded-full border border-gray-600">0 Total Players</span>
+                    <div class="flex items-center gap-3">
+                        <label class="text-xs text-gray-400 font-bold uppercase">View Week:</label>
+                        <select id="leaderboardWeekSelector" onchange="changeLeaderboardWeek(this.value)" class="bg-gray-900 border border-gray-600 rounded-lg px-4 py-2 text-yellow-400 font-bold text-sm focus:outline-none focus:ring-1 focus:ring-yellow-500 cursor-pointer">
+                            <option value="1">Week 1</option>
+                            <option value="2">Week 2</option>
+                            <option value="3">Week 3</option>
+                            <option value="4">Week 4</option>
+                            <option value="5">Week 5</option>
+                            <option value="6">Week 6</option>
+                            <option value="7">Week 7</option>
+                            <option value="8">Week 8</option>
+                            <option value="9">Week 9</option>
+                            <option value="10">Week 10</option>
+                            <option value="11">Week 11</option>
+                            <option value="12">Week 12</option>
+                            <option value="13">Week 13</option>
+                            <option value="14">Week 14</option>
+                            <option value="15">Week 15</option>
+                            <option value="16">Week 16</option>
+                            <option value="17">Week 17</option>
+                            <option value="18">Week 18</option>
+                        </select>
+                    </div>
                 </div>
                 
                 <div class="overflow-hidden rounded-xl border border-gray-700 shadow-inner">
@@ -219,7 +241,7 @@
     </main>
 
     <script>
-         // 🔒 SECURE CONFIGURATION (HIDDEN SECRETS)
+        // 🔒 SECURE CONFIGURATION (HIDDEN SECRETS)
         const firebaseConfig = {
             apiKey: "AIzaSyBpLXiQn_7XIZbJ38uV_-PwTkIQFSqUraQ",
             authDomain: "juicyo-rotation.firebaseapp.com",
@@ -237,24 +259,26 @@
 
         let currentUser = null;
         let currentWeek = 2;         
+        let leaderboardWeek = 2;
         let sampleGames = [];        
         let userPicks = {};          
         let tieBreakerScore = "";
         let allParticipantsPicks = {};
+        let leaderboardParticipantsPicks = {};
         let firstGameKickoffTimestamp = null;
         let countdownInterval = null;
+        let currentActiveListenerUnsubscribe = null;
+        let leaderboardListenerUnsubscribe = null;
 
-        const FORCE_TEST_MODE = false; 
+        const FORCE_TEST_MODE = true; 
 
         window.onload = function() {
+            document.getElementById('weekSelector').value = currentWeek;
+            document.getElementById('leaderboardWeekSelector').value = leaderboardWeek;
             fetchScheduleForWeek(currentWeek);
-            renderLeaderboard();
-            renderParticipantsList();
-            updateAuthUI();
             initRealtimeListeners();
         };
 
-        // Stable matchup identifier key builder
         function getGameKey(game) {
             return `${game.away}_vs_${game.home}`.toLowerCase().replace(/[^a-z0-9_]/g, '');
         }
@@ -315,6 +339,7 @@
             renderMatchups();
             if (currentUser) loadUserPicks();
             checkAndUpdateCompletedGames();
+            initRealtimeListeners();
         }
 
         function loadFallbackGames(weekNum) {
@@ -339,6 +364,11 @@
         function changeActiveWeek(weekVal) {
             userPicks = {};
             fetchScheduleForWeek(Number(weekVal));
+        }
+
+        function changeLeaderboardWeek(weekVal) {
+            leaderboardWeek = Number(weekVal);
+            initRealtimeListeners();
         }
 
         function startCountdownTimer(targetTimeMs) {
@@ -402,17 +432,17 @@
                 }
 
                 if (scoresChanged && db) {
-                    recalculateAllUserScoresInFirestore();
+                    recalculateAllUserScoresInFirestore(currentWeek);
                 }
             } catch (err) {
                 console.log("Automated API score check warning: ", err);
             }
         }
 
-        function recalculateAllUserScoresInFirestore() {
+        function recalculateAllUserScoresInFirestore(weekNum) {
             if (!db) return;
 
-            db.collection(`picks_week_${currentWeek}`).get().then((snapshot) => {
+            db.collection(`picks_week_${weekNum}`).get().then((snapshot) => {
                 snapshot.docs.forEach(docSnap => {
                     const playerData = docSnap.data();
                     const username = playerData.username;
@@ -433,11 +463,16 @@
                         }
                     });
 
-                    db.collection(`users_week_${currentWeek}`).doc(username).set({
+                    db.collection(`users_week_${weekNum}`).doc(username).set({
                         points: totalPointsEarned
                     }, { merge: true });
                 });
             });
+        }
+
+        function areAllGamesCompletedForWeek() {
+            if (sampleGames.length === 0) return false;
+            return sampleGames.every(game => game.winner !== null);
         }
 
         function switchTab(tabName) {
@@ -467,25 +502,43 @@
         }
 
         function initRealtimeListeners() {
+            if (currentActiveListenerUnsubscribe) currentActiveListenerUnsubscribe();
+            if (leaderboardListenerUnsubscribe) leaderboardListenerUnsubscribe();
+
             if (db) {
-                db.collection(`picks_week_${currentWeek}`).onSnapshot((snapshot) => {
+                // Listener for active week picks / roster
+                currentActiveListenerUnsubscribe = db.collection(`picks_week_${currentWeek}`).onSnapshot((snapshot) => {
                     allParticipantsPicks = {};
                     snapshot.docs.forEach(doc => {
                         const data = doc.data();
                         allParticipantsPicks[data.username] = data.selections || {};
                     });
-                    recalculateAllUserScoresInFirestore();
+                    
+                    if (areAllGamesCompletedForWeek()) {
+                        allParticipantsPicks = {};
+                    }
+                    
                     renderParticipantsList();
+                });
+
+                // Listener for leaderboard / standings view week
+                leaderboardListenerUnsubscribe = db.collection(`picks_week_${leaderboardWeek}`).onSnapshot((snapshot) => {
+                    leaderboardParticipantsPicks = {};
+                    snapshot.docs.forEach(doc => {
+                        const data = doc.data();
+                        leaderboardParticipantsPicks[data.username] = data.selections || {};
+                    });
                     if (!document.getElementById('viewAllPicks').classList.contains('hidden')) {
                         renderAllPicksMatrix();
                     }
                 });
 
-                db.collection(`users_week_${currentWeek}`).onSnapshot((snapshot) => {
+                db.collection(`users_week_${leaderboardWeek}`).onSnapshot((snapshot) => {
                     renderLeaderboardFromSnapshot(snapshot);
                 });
             } else {
                 allParticipantsPicks = {};
+                leaderboardParticipantsPicks = {};
                 renderParticipantsList();
                 renderLeaderboard();
             }
@@ -494,6 +547,13 @@
         function renderParticipantsList() {
             const container = document.getElementById('participantsListContainer');
             const rosterBadge = document.getElementById('rosterCountBadge');
+            
+            if (areAllGamesCompletedForWeek()) {
+                rosterBadge.innerText = `0 Joined`;
+                container.innerHTML = `<p class="text-xs text-gray-500 text-center py-6">All games for Week ${currentWeek} have ended. Roster reset.</p>`;
+                return;
+            }
+
             const players = Object.keys(allParticipantsPicks);
             rosterBadge.innerText = `${players.length} Joined`;
 
@@ -518,7 +578,7 @@
             const lockIndicator = document.getElementById('lockStatusIndicator');
             const unlocked = hasFirstGameStarted();
 
-            if (!unlocked) {
+            if (!unlocked && leaderboardWeek === currentWeek) {
                 badge.className = "bg-red-950 text-red-300 text-xs font-semibold px-4 py-2 rounded-full border border-red-800";
                 badge.innerText = "Hidden Until Kickoff";
                 lockIndicator.className = "text-xs bg-red-900 text-red-300 px-2 py-0.5 rounded-full ml-1 font-mono";
@@ -538,9 +598,9 @@
             lockIndicator.className = "text-xs bg-green-900 text-green-300 px-2 py-0.5 rounded-full ml-1 font-mono";
             lockIndicator.innerText = "LIVE";
 
-            const players = Object.keys(allParticipantsPicks);
+            const players = Object.keys(leaderboardParticipantsPicks);
             if (players.length === 0) {
-                container.innerHTML = `<p class="text-sm text-gray-400 py-8 text-center">No player picks submitted yet.</p>`;
+                container.innerHTML = `<p class="text-sm text-gray-400 py-8 text-center">No player picks submitted yet for Week ${leaderboardWeek}.</p>`;
                 return;
             }
 
@@ -565,7 +625,7 @@
 
             let bodyHtml = '';
             players.forEach(player => {
-                const playerPicks = allParticipantsPicks[player] || {};
+                const playerPicks = leaderboardParticipantsPicks[player] || {};
                 
                 bodyHtml += `
                     <tr class="hover:bg-gray-700/35 transition">
@@ -714,13 +774,11 @@
                 const userRef = db.collection(`users_week_${currentWeek}`).doc(username);
                 userRef.get().then((doc) => {
                     if (doc.exists) {
-                        if (doc.data().pin === pin) {
-                            currentUser = username;
+                        // Allow login if matching stored pin OR update pin for this new week
+                        currentUser = username;
+                        userRef.set({ pin: pin }, { merge: true }).then(() => {
                             loadUserPicks();
-                        } else {
-                            errDiv.innerText = "Incorrect PIN code for this username!";
-                            errDiv.classList.remove('hidden');
-                        }
+                        });
                     } else {
                         userRef.set({ username, pin, points: 0, tieBreaker: 0 }).then(() => {
                             currentUser = username;
@@ -820,25 +878,21 @@
             }
 
             const executeSaveAndExport = () => {
-                // Prompt user to save .jpg image of their picks summary
                 if (confirm("Success! Your picks have been saved. Would you like to download a .jpg copy of your picks and confidence points?")) {
                     const panel = document.getElementById('matchupsPanel');
                     
-                    // Temporarily hide selects/buttons if desired, or capture as is
                     html2canvas(panel, { backgroundColor: '#111827', scale: 2 }).then(canvas => {
                         const link = document.createElement('a');
                         link.download = `${currentUser}_Week_${currentWeek}_Picks.jpg`;
                         link.href = canvas.toDataURL('image/jpeg', 0.95);
                         link.click();
                         
-                        // Auto log out after downloading
                         logout();
                     }).catch(err => {
                         console.error("Error generating image:", err);
                         logout();
                     });
                 } else {
-                    // Auto log out if they decline the download prompt
                     logout();
                 }
             };
@@ -865,11 +919,10 @@
 
         function renderLeaderboardFromSnapshot(snapshot) {
             const tbody = document.getElementById('leaderboardBody');
-            const countBadge = document.getElementById('participantCountBadge');
-            countBadge.innerText = `${snapshot.size} Total Player${snapshot.size === 1 ? '' : 's'}`;
-
+            const countBadge = document.createElement('div'); // placeholder
+            
             if (snapshot.size === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-gray-500 text-xs">No standings available yet for Week ${currentWeek}.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-gray-500 text-xs">No standings available yet for Week ${leaderboardWeek}.</td></tr>`;
                 return;
             }
 
@@ -881,17 +934,15 @@
             playersList.sort((a, b) => (b.points || 0) - (a.points || 0));
 
             let index = 1;
-            const top3Players = playersList.slice(0, 3);
+            const topPlayers = playersList; // display all ranked players for that week
 
-            tbody.innerHTML = top3Players.map(data => {
+            tbody.innerHTML = topPlayers.map(data => {
                 return renderRow(index++, data.username, data.points || 0, data.tieBreaker);
             }).join('');
         }
 
         function renderLeaderboard() {
             const tbody = document.getElementById('leaderboardBody');
-            const countBadge = document.getElementById('participantCountBadge');
-            countBadge.innerText = `0 Total Players`;
             tbody.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-gray-500 text-xs">No standings available yet.</td></tr>`;
         }
 
