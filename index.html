@@ -9,8 +9,6 @@
     <!-- Firebase App and Firestore SDKs (Compat v9) -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-    <!-- html2canvas for exporting picks as .jpg -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         /* Custom styles for pick buttons and dropdowns */
         .pick-btn.selected {
@@ -76,7 +74,7 @@
                     <div id="authErrorMsg" class="text-red-400 text-sm mt-3 px-5 hidden"></div>
                 </div>
 
-                <!-- MATCHUPS PANEL (Captured for JPG export) -->
+                <!-- MATCHUPS PANEL -->
                 <div id="matchupsPanel" class="bg-gray-800 border border-gray-700 rounded-2xl p-8 shadow-xl hidden transition-opacity duration-300 opacity-0">
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 pb-6 border-b border-gray-700">
                         <div>
@@ -240,6 +238,34 @@
 
     </main>
 
+    <!-- HIDDEN CONTAINER TO RENDER CLEAN TEXT LIST FOR JPG EXPORT -->
+    <div id="exportCanvasContainer" style="position: absolute; left: -9999px; top: -9999px;">
+        <div id="exportCard" style="width: 700px; background-color: #0f172a; color: #f8fafc; padding: 40px; font-family: ui-sans-serif, system-ui, sans-serif; border: 2px solid #334155; border-radius: 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #334155; padding-bottom: 20px; margin-bottom: 24px;">
+                <div>
+                    <h1 id="exportTitle" style="font-size: 24px; font-weight: 800; color: #eab308; margin: 0 0 4px 0;">NFL CONFIDENCE POOL</h1>
+                    <p id="exportSubTitle" style="font-size: 14px; color: #94a3b8; margin: 0;">Weekly Picks Submission List</p>
+                </div>
+                <div style="text-align: right;">
+                    <div id="exportPlayerName" style="font-size: 18px; font-weight: 700; color: #f8fafc;">Player: --</div>
+                    <div id="exportTimestamp" style="font-size: 12px; color: #64748b; margin-top: 2px;">--</div>
+                </div>
+            </div>
+            
+            <div id="exportListItems" style="display: flex; flex-direction: column; gap: 8px;">
+                <!-- Dynamically populated picks list -->
+            </div>
+
+            <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid #334155; display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 14px; font-weight: 700; color: #eab308;">Monday Night Tie-Breaker (Total Points):</span>
+                <span id="exportTieBreakerVal" style="font-size: 16px; font-weight: 900; color: #f8fafc; background-color: #1e293b; padding: 6px 16px; border-radius: 8px; border: 1px solid #475569;">--</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- html2canvas for exporting text list as .jpg -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
     <script>
         // 🔒 SECURE CONFIGURATION (HIDDEN SECRETS)
         const firebaseConfig = {
@@ -252,14 +278,34 @@
         };
 
         let db;
-        if (firebaseConfig.apiKey !== "") {
+        if (firebaseConfig.apiKey !== "YOUR_API_KEY_HERE") {
             firebase.initializeApp(firebaseConfig);
             db = firebase.firestore();
         }
 
         let currentUser = null;
-        let currentWeek = 2;         
-        let leaderboardWeek = 2;
+        
+        // Dynamically compute current NFL Week based on current date
+        function determineCurrentNFLWeek() {
+            const now = new Date();
+            const year = now.getFullYear();
+            // Approximate NFL Season Week 1 start: First Thursday/Sunday after Labor Day (roughly Sept 7)
+            const seasonStart = new Date(year, 8, 7); // Sept 7 of current year
+            
+            // If we are before September, default to Week 1 of the upcoming/current year context
+            if (now < seasonStart) return 1;
+
+            const diffTime = now - seasonStart;
+            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+            const calculatedWeek = Math.floor(diffDays / 7) + 1;
+
+            if (calculatedWeek < 1) return 1;
+            if (calculatedWeek > 18) return 18;
+            return calculatedWeek;
+        }
+
+        let currentWeek = determineCurrentNFLWeek();         
+        let leaderboardWeek = currentWeek;
         let sampleGames = [];        
         let userPicks = {};          
         let tieBreakerScore = "";
@@ -506,7 +552,6 @@
             if (leaderboardListenerUnsubscribe) leaderboardListenerUnsubscribe();
 
             if (db) {
-                // Listener for active week picks / roster
                 currentActiveListenerUnsubscribe = db.collection(`picks_week_${currentWeek}`).onSnapshot((snapshot) => {
                     allParticipantsPicks = {};
                     snapshot.docs.forEach(doc => {
@@ -521,7 +566,6 @@
                     renderParticipantsList();
                 });
 
-                // Listener for leaderboard / standings view week
                 leaderboardListenerUnsubscribe = db.collection(`picks_week_${leaderboardWeek}`).onSnapshot((snapshot) => {
                     leaderboardParticipantsPicks = {};
                     snapshot.docs.forEach(doc => {
@@ -774,7 +818,6 @@
                 const userRef = db.collection(`users_week_${currentWeek}`).doc(username);
                 userRef.get().then((doc) => {
                     if (doc.exists) {
-                        // Allow login if matching stored pin OR update pin for this new week
                         currentUser = username;
                         userRef.set({ pin: pin }, { merge: true }).then(() => {
                             loadUserPicks();
@@ -878,20 +921,8 @@
             }
 
             const executeSaveAndExport = () => {
-                if (confirm("Success! Your picks have been saved. Would you like to download a .jpg copy of your picks and confidence points?")) {
-                    const panel = document.getElementById('matchupsPanel');
-                    
-                    html2canvas(panel, { backgroundColor: '#111827', scale: 2 }).then(canvas => {
-                        const link = document.createElement('a');
-                        link.download = `${currentUser}_Week_${currentWeek}_Picks.jpg`;
-                        link.href = canvas.toDataURL('image/jpeg', 0.95);
-                        link.click();
-                        
-                        logout();
-                    }).catch(err => {
-                        console.error("Error generating image:", err);
-                        logout();
-                    });
+                if (confirm("Success! Your picks have been saved. Would you like to download a clean text list .jpg of your picks and confidence points?")) {
+                    generateTextListJpg();
                 } else {
                     logout();
                 }
@@ -917,9 +948,50 @@
             }
         }
 
+        function generateTextListJpg() {
+            document.getElementById('exportTitle').innerText = `NFL CONFIDENCE POOL`;
+            document.getElementById('exportSubTitle').innerText = `Week ${currentWeek} Official Picks List`;
+            document.getElementById('exportPlayerName').innerText = `Player: ${currentUser}`;
+            document.getElementById('exportTimestamp').innerText = new Date().toLocaleString();
+            document.getElementById('exportTieBreakerVal').innerText = tieBreakerScore !== "" ? tieBreakerScore : "None";
+
+            const listContainer = document.getElementById('exportListItems');
+            let itemsHtml = '';
+
+            sampleGames.forEach((game, idx) => {
+                const gameKey = getGameKey(game);
+                const pick = userPicks[gameKey] || {};
+                const pickedTeam = pick.team || "No Pick";
+                const confPts = pick.confidence || "-";
+
+                itemsHtml += `
+                    <div style="display: flex; justify-content: space-between; align-items: center; background-color: #1e293b; padding: 10px 16px; border-radius: 8px; border: 1px solid #334155; font-size: 14px;">
+                        <span style="color: #94a3b8; font-weight: 600; width: 45px;">G${idx+1}</span>
+                        <span style="color: #f8fafc; flex: 1; text-align: left; padding: 0 10px;">${game.away} @ ${game.home}</span>
+                        <span style="color: #eab308; font-weight: 700; width: 140px; text-align: right;">Pick: ${pickedTeam}</span>
+                        <span style="color: #38bdf8; font-weight: 800; width: 80px; text-align: right; font-family: monospace;">(${confPts} Pts)</span>
+                    </div>
+                `;
+            });
+
+            listContainer.innerHTML = itemsHtml;
+
+            const exportCard = document.getElementById('exportCard');
+            html2canvas(exportCard, { backgroundColor: '#0f172a', scale: 2 }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `${currentUser}_Week_${currentWeek}_Picks_List.jpg`;
+                link.href = canvas.toDataURL('image/jpeg', 0.95);
+                link.click();
+                
+                logout();
+            }).catch(err => {
+                console.error("Error generating text list JPG:", err);
+                logout();
+            });
+        }
+
         function renderLeaderboardFromSnapshot(snapshot) {
             const tbody = document.getElementById('leaderboardBody');
-            const countBadge = document.createElement('div'); // placeholder
             
             if (snapshot.size === 0) {
                 tbody.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-gray-500 text-xs">No standings available yet for Week ${leaderboardWeek}.</td></tr>`;
@@ -934,9 +1006,7 @@
             playersList.sort((a, b) => (b.points || 0) - (a.points || 0));
 
             let index = 1;
-            const topPlayers = playersList; // display all ranked players for that week
-
-            tbody.innerHTML = topPlayers.map(data => {
+            tbody.innerHTML = playersList.map(data => {
                 return renderRow(index++, data.username, data.points || 0, data.tieBreaker);
             }).join('');
         }
