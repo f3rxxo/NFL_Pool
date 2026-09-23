@@ -9,6 +9,8 @@
     <!-- Firebase App and Firestore SDKs (Compat v9) -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <!-- html2canvas for exporting picks as .jpg -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         /* Custom styles for pick buttons and dropdowns */
         .pick-btn.selected {
@@ -74,7 +76,7 @@
                     <div id="authErrorMsg" class="text-red-400 text-sm mt-3 px-5 hidden"></div>
                 </div>
 
-                <!-- MATCHUPS PANEL -->
+                <!-- MATCHUPS PANEL (Captured for JPG export) -->
                 <div id="matchupsPanel" class="bg-gray-800 border border-gray-700 rounded-2xl p-8 shadow-xl hidden transition-opacity duration-300 opacity-0">
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 pb-6 border-b border-gray-700">
                         <div>
@@ -216,8 +218,6 @@
 
     </main>
 
-    <canvas id="proofCanvas" class="hidden"></canvas>
-
     <script>
          // 🔒 SECURE CONFIGURATION (HIDDEN SECRETS)
         const firebaseConfig = {
@@ -230,10 +230,11 @@
         };
 
         let db;
-        if (firebaseConfig.apiKey !== "YOUR_API_KEY_HERE") {
+        if (firebaseConfig.apiKey !== "") {
             firebase.initializeApp(firebaseConfig);
             db = firebase.firestore();
         }
+
         let currentUser = null;
         let currentWeek = 2;         
         let sampleGames = [];        
@@ -818,6 +819,30 @@
                 }
             }
 
+            const executeSaveAndExport = () => {
+                // Prompt user to save .jpg image of their picks summary
+                if (confirm("Success! Your picks have been saved. Would you like to download a .jpg copy of your picks and confidence points?")) {
+                    const panel = document.getElementById('matchupsPanel');
+                    
+                    // Temporarily hide selects/buttons if desired, or capture as is
+                    html2canvas(panel, { backgroundColor: '#111827', scale: 2 }).then(canvas => {
+                        const link = document.createElement('a');
+                        link.download = `${currentUser}_Week_${currentWeek}_Picks.jpg`;
+                        link.href = canvas.toDataURL('image/jpeg', 0.95);
+                        link.click();
+                        
+                        // Auto log out after downloading
+                        logout();
+                    }).catch(err => {
+                        console.error("Error generating image:", err);
+                        logout();
+                    });
+                } else {
+                    // Auto log out if they decline the download prompt
+                    logout();
+                }
+            };
+
             if (db) {
                 db.collection(`picks_week_${currentWeek}`).doc(currentUser).set({
                     username: currentUser,
@@ -831,12 +856,10 @@
                         tieBreaker: Number(tieBreakerScore)
                     }, { merge: true });
                 }).then(() => {
-                    alert(`Success! Week ${currentWeek} picks uploaded and scores synced.`);
-                    logout();
+                    executeSaveAndExport();
                 }).catch(err => alert("Error saving picks: " + err.message));
             } else {
-                alert("Confidence picks saved locally in sandbox mode!");
-                logout();
+                executeSaveAndExport();
             }
         }
 
