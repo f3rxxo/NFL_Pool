@@ -176,28 +176,34 @@
                         </h2>
                         <p class="text-sm text-gray-400 mt-1">Review live standings for the selected week or check out previous week winners.</p>
                     </div>
-                    <div class="flex items-center gap-3">
-                        <label class="text-xs text-gray-400 font-bold uppercase">View Week:</label>
-                        <select id="leaderboardWeekSelector" onchange="changeLeaderboardWeek(this.value)" class="bg-gray-900 border border-gray-600 rounded-lg px-4 py-2 text-yellow-400 font-bold text-sm focus:outline-none focus:ring-1 focus:ring-yellow-500 cursor-pointer">
-                            <option value="1">Week 1</option>
-                            <option value="2">Week 2</option>
-                            <option value="3">Week 3</option>
-                            <option value="4">Week 4</option>
-                            <option value="5">Week 5</option>
-                            <option value="6">Week 6</option>
-                            <option value="7">Week 7</option>
-                            <option value="8">Week 8</option>
-                            <option value="9">Week 9</option>
-                            <option value="10">Week 10</option>
-                            <option value="11">Week 11</option>
-                            <option value="12">Week 12</option>
-                            <option value="13">Week 13</option>
-                            <option value="14">Week 14</option>
-                            <option value="15">Week 15</option>
-                            <option value="16">Week 16</option>
-                            <option value="17">Week 17</option>
-                            <option value="18">Week 18</option>
-                        </select>
+                    <div class="flex items-center gap-3 flex-wrap">
+                        <button onclick="manualRefreshScores()" class="bg-gray-700 hover:bg-gray-600 text-yellow-400 text-xs font-bold px-4 py-2 rounded-lg border border-gray-600 transition flex items-center gap-1.5 cursor-pointer">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                            Refresh Scores
+                        </button>
+                        <div class="flex items-center gap-2">
+                            <label class="text-xs text-gray-400 font-bold uppercase">View Week:</label>
+                            <select id="leaderboardWeekSelector" onchange="changeLeaderboardWeek(this.value)" class="bg-gray-900 border border-gray-600 rounded-lg px-4 py-2 text-yellow-400 font-bold text-sm focus:outline-none focus:ring-1 focus:ring-yellow-500 cursor-pointer">
+                                <option value="1">Week 1</option>
+                                <option value="2">Week 2</option>
+                                <option value="3">Week 3</option>
+                                <option value="4">Week 4</option>
+                                <option value="5">Week 5</option>
+                                <option value="6">Week 6</option>
+                                <option value="7">Week 7</option>
+                                <option value="8">Week 8</option>
+                                <option value="9">Week 9</option>
+                                <option value="10">Week 10</option>
+                                <option value="11">Week 11</option>
+                                <option value="12">Week 12</option>
+                                <option value="13">Week 13</option>
+                                <option value="14">Week 14</option>
+                                <option value="15">Week 15</option>
+                                <option value="16">Week 16</option>
+                                <option value="17">Week 17</option>
+                                <option value="18">Week 18</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
                 
@@ -267,7 +273,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
     <script>
-        // 🔒 SECURE CONFIGURATION (HIDDEN SECRETS)
+      // 🔒 SECURE CONFIGURATION (HIDDEN SECRETS)
         const firebaseConfig = {
             apiKey: "AIzaSyBpLXiQn_7XIZbJ38uV_-PwTkIQFSqUraQ",
             authDomain: "juicyo-rotation.firebaseapp.com",
@@ -285,14 +291,11 @@
 
         let currentUser = null;
         
-        // Dynamically compute current NFL Week based on current date
         function determineCurrentNFLWeek() {
             const now = new Date();
             const year = now.getFullYear();
-            // Approximate NFL Season Week 1 start: First Thursday/Sunday after Labor Day (roughly Sept 7)
-            const seasonStart = new Date(year, 8, 7); // Sept 7 of current year
+            const seasonStart = new Date(year, 8, 7); 
             
-            // If we are before September, default to Week 1 of the upcoming/current year context
             if (now < seasonStart) return 1;
 
             const diffTime = now - seasonStart;
@@ -316,7 +319,7 @@
         let currentActiveListenerUnsubscribe = null;
         let leaderboardListenerUnsubscribe = null;
 
-        const FORCE_TEST_MODE = false;  
+        const FORCE_TEST_MODE = false; 
 
         window.onload = function() {
             document.getElementById('weekSelector').value = currentWeek;
@@ -414,7 +417,13 @@
 
         function changeLeaderboardWeek(weekVal) {
             leaderboardWeek = Number(weekVal);
+            checkAndUpdateCompletedGames();
             initRealtimeListeners();
+        }
+
+        function manualRefreshScores() {
+            checkAndUpdateCompletedGames();
+            alert("Scores and standings checked and synchronized with ESPN!");
         }
 
         function startCountdownTimer(targetTimeMs) {
@@ -446,7 +455,7 @@
 
         async function checkAndUpdateCompletedGames() {
             try {
-                const response = await fetch(`https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?week=${currentWeek}&seasontype=2`);
+                const response = await fetch(`https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?week=${leaderboardWeek}&seasontype=2`);
                 const data = await response.json();
                 
                 let scoresChanged = false;
@@ -477,8 +486,8 @@
                     });
                 }
 
-                if (scoresChanged && db) {
-                    recalculateAllUserScoresInFirestore(currentWeek);
+                if (scoresChanged || true) {
+                    recalculateAllUserScoresInFirestore(leaderboardWeek);
                 }
             } catch (err) {
                 console.log("Automated API score check warning: ", err);
@@ -537,6 +546,7 @@
                 viewAllPicks.classList.remove('hidden');
                 tabAllPicks.className = "px-6 py-3 font-bold text-sm rounded-t-lg border-t border-x border-gray-700 bg-gray-800 text-yellow-500 transition-all duration-150 cursor-pointer flex items-center gap-2";
                 tabMatchups.className = "px-6 py-3 font-bold text-sm rounded-t-lg border-t border-x border-transparent text-gray-400 hover:text-gray-200 transition-all duration-150 cursor-pointer flex items-center gap-2";
+                checkAndUpdateCompletedGames();
                 renderAllPicksMatrix();
             }
         }
