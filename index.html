@@ -318,6 +318,7 @@
         let countdownInterval = null;
         let currentActiveListenerUnsubscribe = null;
         let leaderboardListenerUnsubscribe = null;
+        let leaderboardUserListenerUnsubscribe = null;
 
         const FORCE_TEST_MODE = false; 
 
@@ -418,7 +419,7 @@
         function changeLeaderboardWeek(weekVal) {
             leaderboardWeek = Number(weekVal);
             checkAndUpdateCompletedGames();
-            initRealtimeListeners();
+            initLeaderboardListeners();
         }
 
         function manualRefreshScores() {
@@ -559,7 +560,6 @@
 
         function initRealtimeListeners() {
             if (currentActiveListenerUnsubscribe) currentActiveListenerUnsubscribe();
-            if (leaderboardListenerUnsubscribe) leaderboardListenerUnsubscribe();
 
             if (db) {
                 currentActiveListenerUnsubscribe = db.collection(`picks_week_${currentWeek}`).onSnapshot((snapshot) => {
@@ -575,7 +575,18 @@
                     
                     renderParticipantsList();
                 });
+            } else {
+                allParticipantsPicks = {};
+                renderParticipantsList();
+            }
+            initLeaderboardListeners();
+        }
 
+        function initLeaderboardListeners() {
+            if (leaderboardListenerUnsubscribe) leaderboardListenerUnsubscribe();
+            if (leaderboardUserListenerUnsubscribe) leaderboardUserListenerUnsubscribe();
+
+            if (db) {
                 leaderboardListenerUnsubscribe = db.collection(`picks_week_${leaderboardWeek}`).onSnapshot((snapshot) => {
                     leaderboardParticipantsPicks = {};
                     snapshot.docs.forEach(doc => {
@@ -587,13 +598,11 @@
                     }
                 });
 
-                db.collection(`users_week_${leaderboardWeek}`).onSnapshot((snapshot) => {
+                leaderboardUserListenerUnsubscribe = db.collection(`users_week_${leaderboardWeek}`).onSnapshot((snapshot) => {
                     renderLeaderboardFromSnapshot(snapshot);
                 });
             } else {
-                allParticipantsPicks = {};
                 leaderboardParticipantsPicks = {};
-                renderParticipantsList();
                 renderLeaderboard();
             }
         }
@@ -1003,7 +1012,7 @@
         function renderLeaderboardFromSnapshot(snapshot) {
             const tbody = document.getElementById('leaderboardBody');
             
-            if (snapshot.size === 0) {
+            if (!snapshot || snapshot.size === 0) {
                 tbody.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-gray-500 text-xs">No standings available yet for Week ${leaderboardWeek}.</td></tr>`;
                 return;
             }
