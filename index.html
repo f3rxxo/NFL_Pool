@@ -10,17 +10,21 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <style>
+        /* Custom styles for pick buttons and dropdowns */
         .pick-btn.selected {
             border-width: 2px;
-            border-color: rgb(234 179 8);
-            background-color: rgb(234 179 8 / 0.1);
-            color: rgb(234 179 8);
+            --tw-border-opacity: 1;
+            border-color: rgb(234 179 8); /* yellow-500 */
+            background-color: rgb(234 179 8 / 0.1); /* yellow-500/10 */
+            --tw-text-opacity: 1;
+            color: rgb(234 179 8); /* yellow-500 */
             font-weight: 600;
         }
     </style>
 </head>
 <body class="bg-gray-900 text-gray-100 font-sans min-h-screen">
 
+    <!-- NAVIGATION BAR -->
     <nav class="bg-gray-800 border-b border-gray-700 p-4 sticky top-0 z-50 shadow-md">
         <div class="max-w-7xl mx-auto flex justify-between items-center">
             <div class="flex items-center gap-3">
@@ -33,11 +37,14 @@
         </div>
     </nav>
 
+    <!-- VIEW NAVIGATION TABS -->
     <div class="max-w-7xl mx-auto px-4 pt-5 flex gap-1 border-b border-gray-800">
         <button onclick="switchTab('matchups')" id="tabMatchups" class="px-6 py-3 font-bold text-sm rounded-t-lg border-t border-x border-gray-700 bg-gray-800 text-yellow-500 transition-all duration-150 cursor-pointer flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M6 16h.01"></path></svg>
             My Weekly Picks
         </button>
         <button onclick="switchTab('allPicks')" id="tabAllPicks" class="px-6 py-3 font-bold text-sm rounded-t-lg border-t border-x border-transparent text-gray-400 hover:text-gray-200 transition-all duration-150 cursor-pointer flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
             Live Leaderboard & History
             <span id="lockStatusIndicator" class="text-xs bg-red-900 text-red-300 px-2 py-0.5 rounded-full ml-1 font-mono hidden">LOCKED</span>
         </button>
@@ -45,100 +52,167 @@
 
     <main class="max-w-7xl mx-auto p-4 md:p-6">
         
-        <!-- MATCHUPS VIEW -->
+        <!-- VIEW 1: MATCHUPS, AUTH & POOL ROSTER -->
         <div id="viewMatchups" class="grid grid-cols-1 xl:grid-cols-4 gap-8">
+            
             <div class="xl:col-span-3 space-y-8">
+                <!-- AUTHENTICATION CARD -->
                 <div id="authCard" class="bg-gray-800 border border-gray-700 rounded-2xl p-8 shadow-xl">
-                    <h2 class="text-2xl font-bold mb-4 text-yellow-400">Player Sign-In / Week Registration</h2>
+                    <h2 class="text-2xl font-bold mb-4 flex items-center gap-3 text-yellow-400">
+                        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path></svg>
+                        Player Sign-In / Week Registration
+                    </h2>
+                    <p class="text-sm text-gray-400 mb-6 max-w-2xl">Enter your username and any 4-digit PIN code. You can use your existing PIN or set a new 4-digit PIN for this active week.</p>
                     <div class="flex flex-col sm:flex-row gap-4 bg-gray-900 p-5 rounded-xl border border-gray-700">
-                        <input type="text" id="usernameInput" placeholder="Username (e.g., Debbie)" class="bg-gray-800 border border-gray-600 rounded-lg px-5 py-3 text-white flex-1 text-lg" autocomplete="off">
-                        <input type="password" id="pinInput" placeholder="4-Digit PIN" maxlength="4" class="bg-gray-800 border border-gray-600 rounded-lg px-5 py-3 text-white w-full sm:w-32 text-center tracking-[.5em] font-mono text-lg" autocomplete="off">
-                        <button onclick="handleAuth()" class="bg-yellow-500 hover:bg-yellow-400 text-gray-950 font-extrabold px-8 py-3 rounded-lg cursor-pointer text-lg">Sign In / Join</button>
+                        <input type="text" id="usernameInput" placeholder="Username (e.g., Debbie)" class="bg-gray-800 border border-gray-600 rounded-lg px-5 py-3 text-white focus:outline-none focus:ring-2 focus:ring-yellow-500 flex-1 text-lg" autocomplete="off">
+                        <input type="password" id="pinInput" placeholder="4-Digit PIN" maxlength="4" class="bg-gray-800 border border-gray-600 rounded-lg px-5 py-3 text-white focus:outline-none focus:ring-2 focus:ring-yellow-500 w-full sm:w-32 text-center tracking-[.5em] font-mono text-lg" autocomplete="off">
+                        <button onclick="handleAuth()" class="bg-yellow-500 hover:bg-yellow-400 text-gray-950 font-extrabold px-8 py-3 rounded-lg transition duration-150 cursor-pointer text-lg flex items-center justify-center gap-2 group">
+                            Sign In / Join
+                            <svg class="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                        </button>
                     </div>
                     <div id="authErrorMsg" class="text-red-400 text-sm mt-3 px-5 hidden"></div>
                 </div>
 
-                <div id="matchupsPanel" class="bg-gray-800 border border-gray-700 rounded-2xl p-8 shadow-xl hidden">
+                <!-- MATCHUPS PANEL -->
+                <div id="matchupsPanel" class="bg-gray-800 border border-gray-700 rounded-2xl p-8 shadow-xl hidden transition-opacity duration-300 opacity-0">
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 pb-6 border-b border-gray-700">
                         <div>
                             <div class="flex items-center gap-3 mb-1">
-                                <h2 id="weekTitleHeader" class="text-3xl font-extrabold text-gray-50">Week Schedule</h2>
-                                <select id="weekSelector" onchange="changeActiveWeek(this.value)" class="bg-gray-900 border border-gray-600 rounded-lg px-4 py-2 text-yellow-400 font-bold text-sm cursor-pointer">
-                                    <option value="1">Week 1</option><option value="2">Week 2</option><option value="3">Week 3</option><option value="4">Week 4</option>
-                                    <option value="5">Week 5</option><option value="6">Week 6</option><option value="7">Week 7</option><option value="8">Week 8</option>
-                                    <option value="9">Week 9</option><option value="10">Week 10</option><option value="11">Week 11</option><option value="12">Week 12</option>
-                                    <option value="13">Week 13</option><option value="14">Week 14</option><option value="15">Week 15</option><option value="16">Week 16</option>
-                                    <option value="17">Week 17</option><option value="18">Week 18</option>
+                                <h2 id="weekTitleHeader" class="text-3xl font-extrabold tracking-tight text-gray-50">Week Schedule</h2>
+                                <select id="weekSelector" onchange="changeActiveWeek(this.value)" class="bg-gray-900 border border-gray-600 rounded-lg px-4 py-2 text-yellow-400 font-bold text-sm focus:outline-none focus:ring-1 focus:ring-yellow-500 cursor-pointer">
+                                    <option value="1">Week 1</option>
+                                    <option value="2">Week 2</option>
+                                    <option value="3">Week 3</option>
+                                    <option value="4">Week 4</option>
+                                    <option value="5">Week 5</option>
+                                    <option value="6">Week 6</option>
+                                    <option value="7">Week 7</option>
+                                    <option value="8">Week 8</option>
+                                    <option value="9">Week 9</option>
+                                    <option value="10">Week 10</option>
+                                    <option value="11">Week 11</option>
+                                    <option value="12">Week 12</option>
+                                    <option value="13">Week 13</option>
+                                    <option value="14">Week 14</option>
+                                    <option value="15">Week 15</option>
+                                    <option value="16">Week 16</option>
+                                    <option value="17">Week 17</option>
+                                    <option value="18">Week 18</option>
                                 </select>
+                            </div>
+                            <p class="text-gray-400">Select winners and assign confidence points (1-16) for every game.</p>
+                        </div>
+                        <div id="countdownBadge" class="bg-red-950 border border-red-800 text-red-300 text-xs font-semibold px-5 py-3 rounded-xl flex items-center gap-3 shadow-inner">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            <div class="flex flex-col">
+                                <span class="text-[10px] uppercase opacity-70">Locks In</span>
+                                <span id="countdownTimerText" class="font-mono font-black text-lg tracking-tight">--:--:--</span>
                             </div>
                         </div>
                     </div>
 
                     <div id="matchupsContainer" class="space-y-4">
-                        <div class="text-center py-20 text-gray-500">Loading Schedule...</div>
+                        <div class="text-center py-20 text-gray-500 flex flex-col items-center gap-4">
+                            <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-yellow-500"></div>
+                            <p class="text-xl font-semibold">Loading NFL Schedule...</p>
+                        </div>
                     </div>
 
-                    <div class="mt-10 p-6 bg-gray-950 border-2 border-yellow-900 rounded-2xl flex flex-col sm:flex-row justify-between items-center gap-5">
+                    <!-- TIE-BREAKER PANEL -->
+                    <div class="mt-10 p-6 bg-gray-950 border-2 border-yellow-900 rounded-2xl flex flex-col sm:flex-row justify-between items-center gap-5 shadow-inner">
                         <div>
-                            <h3 class="text-lg font-bold text-yellow-500 uppercase">Monday Night Tie-Breaker</h3>
-                            <p id="tieBreakerLabel" class="text-sm text-gray-400 mt-1">Guess total combined points scored in the final game.</p>
+                            <h3 class="text-lg font-bold text-yellow-500 uppercase tracking-wider flex items-center gap-2">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                                Monday Night Tie-Breaker
+                            </h3>
+                            <p id="tieBreakerLabel" class="text-sm text-gray-400 mt-1">Guess total combined points scored in the final game of the week.</p>
                         </div>
                         <div class="w-full sm:w-auto flex items-center gap-4 bg-gray-800 p-3 rounded-xl border border-gray-700">
-                            <input type="number" id="tieBreakerInput" placeholder="Total Pts" onchange="updateTieBreaker(this.value)" class="bg-gray-900 border border-gray-700 rounded-lg px-6 py-4 text-white text-center font-black w-full sm:w-40 text-2xl">
+                            <input type="number" id="tieBreakerInput" placeholder="Total Pts (e.g. 47)" min="0" max="150" onchange="updateTieBreaker(this.value)" class="bg-gray-900 border border-gray-700 rounded-lg px-6 py-4 text-white text-center font-black focus:outline-none focus:ring-1 focus:ring-yellow-500 w-full sm:w-40 text-2xl tracking-tight">
+                            <button onclick="saveTieBreakerOnly()" class="bg-gray-700 hover:bg-gray-600 text-gray-300 text-xs px-3 py-4 h-full rounded-lg flex items-center" title="Save just the tie-breaker value">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
+                            </button>
                         </div>
                     </div>
 
                     <div class="mt-10 pt-6 border-t border-gray-700 flex justify-end">
-                        <button onclick="submitPicks()" class="bg-yellow-500 hover:bg-yellow-400 text-gray-950 font-extrabold px-12 py-4 rounded-xl cursor-pointer text-xl shadow-lg">SUBMIT PICKS</button>
+                        <button id="submitPicksBtn" onclick="submitPicks()" class="bg-yellow-500 hover:bg-yellow-400 text-gray-950 font-extrabold px-12 py-4 rounded-xl shadow-2xl shadow-yellow-900/60 active:scale-[0.98] transition-all duration-150 cursor-pointer text-xl flex items-center gap-3 group">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
+                            SUBMIT MY WEEKLY PICKS
+                        </button>
                     </div>
                 </div>
             </div>
 
+            <!-- RIGHT COLUMN: POOL ROSTER -->
             <div class="space-y-8">
                 <div class="bg-gray-800 border border-gray-700 rounded-2xl p-6 shadow-xl sticky top-28">
                     <div class="flex justify-between items-center mb-5 pb-3 border-b border-gray-700">
-                        <h3 class="text-xl font-bold text-gray-50">Pool Roster</h3>
-                        <span id="rosterCountBadge" class="bg-gray-700 text-yellow-400 text-xs font-bold px-3 py-1 rounded-full">0 Joined</span>
+                        <h3 class="text-xl font-bold text-gray-50 flex items-center gap-2">
+                            <svg class="w-6 h-6 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                            Pool Roster
+                        </h3>
+                        <span id="rosterCountBadge" class="bg-gray-700 text-yellow-400 text-xs font-bold px-3 py-1 rounded-full border border-gray-600">0 Joined</span>
                     </div>
-                    <div id="participantsListContainer" class="space-y-2.5 max-h-[500px] overflow-y-auto">
+                    <p class="text-xs text-gray-400 mb-4">Players currently registered and active in this week's pool.</p>
+                    
+                    <div id="participantsListContainer" class="space-y-2.5 max-h-[500px] overflow-y-auto pr-1">
                         <div class="text-center py-8 text-gray-500 text-xs">Loading roster...</div>
                     </div>
                 </div>
             </div>
+
         </div>
 
-        <!-- LEADERBOARD & MATRIX VIEW -->
+        <!-- VIEW 2: ALL PLAYERS & LEADERBOARD -->
         <div id="viewAllPicks" class="hidden space-y-8">
             <div class="bg-gray-800 border border-gray-700 rounded-2xl p-8 shadow-xl">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 pb-4 border-b border-gray-700">
                     <div>
-                        <h2 class="text-2xl font-bold text-yellow-400">Podium Standings & Past Winners</h2>
+                        <h2 class="text-2xl font-bold flex items-center gap-3 text-yellow-400">
+                            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path></svg>
+                            Podium Standings & Past Winners
+                        </h2>
+                        <p class="text-sm text-gray-400 mt-1">Review live standings for the selected week or check out previous week winners.</p>
                     </div>
                     <div class="flex items-center gap-3">
-                        <button onclick="manualRefreshScores()" class="bg-gray-700 hover:bg-gray-600 text-yellow-400 text-xs font-bold px-4 py-2 rounded-lg cursor-pointer">Refresh Scores</button>
-                        <select id="leaderboardWeekSelector" onchange="changeLeaderboardWeek(this.value)" class="bg-gray-900 border border-gray-600 rounded-lg px-4 py-2 text-yellow-400 font-bold text-sm cursor-pointer">
-                            <option value="1">Week 1</option><option value="2">Week 2</option><option value="3">Week 3</option><option value="4">Week 4</option>
-                            <option value="5">Week 5</option><option value="6">Week 6</option><option value="7">Week 7</option><option value="8">Week 8</option>
-                            <option value="9">Week 9</option><option value="10">Week 10</option><option value="11">Week 11</option><option value="12">Week 12</option>
-                            <option value="13">Week 13</option><option value="14">Week 14</option><option value="15">Week 15</option><option value="16">Week 16</option>
-                            <option value="17">Week 17</option><option value="18">Week 18</option>
+                        <label class="text-xs text-gray-400 font-bold uppercase">View Week:</label>
+                        <select id="leaderboardWeekSelector" onchange="changeLeaderboardWeek(this.value)" class="bg-gray-900 border border-gray-600 rounded-lg px-4 py-2 text-yellow-400 font-bold text-sm focus:outline-none focus:ring-1 focus:ring-yellow-500 cursor-pointer">
+                            <option value="1">Week 1</option>
+                            <option value="2">Week 2</option>
+                            <option value="3">Week 3</option>
+                            <option value="4">Week 4</option>
+                            <option value="5">Week 5</option>
+                            <option value="6">Week 6</option>
+                            <option value="7">Week 7</option>
+                            <option value="8">Week 8</option>
+                            <option value="9">Week 9</option>
+                            <option value="10">Week 10</option>
+                            <option value="11">Week 11</option>
+                            <option value="12">Week 12</option>
+                            <option value="13">Week 13</option>
+                            <option value="14">Week 14</option>
+                            <option value="15">Week 15</option>
+                            <option value="16">Week 16</option>
+                            <option value="17">Week 17</option>
+                            <option value="18">Week 18</option>
                         </select>
                     </div>
                 </div>
                 
-                <div class="overflow-hidden rounded-xl border border-gray-700">
+                <div class="overflow-hidden rounded-xl border border-gray-700 shadow-inner">
                     <table class="w-full text-left border-collapse">
                         <thead>
-                            <tr class="bg-gray-900 text-gray-300 text-xs font-bold uppercase">
+                            <tr class="bg-gray-900 text-gray-300 text-xs font-bold uppercase tracking-wider">
                                 <th class="p-4">Rank</th>
                                 <th class="p-4">Player</th>
                                 <th class="p-4 text-center">MNF TB</th>
-                                <th class="p-4 text-center">Wins</th>
                                 <th class="p-4 text-right">Confidence Pts</th>
                             </tr>
                         </thead>
                         <tbody id="leaderboardBody" class="divide-y divide-gray-700 text-sm">
-                            <tr><td colspan="5" class="p-6 text-center text-gray-500 text-xs">Loading standings...</td></tr>
+                            <tr><td colspan="4" class="p-6 text-center text-gray-500 text-xs">No standings available yet.</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -146,17 +220,54 @@
 
             <div class="bg-gray-800 border border-gray-700 rounded-2xl p-8 shadow-xl">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 pb-4 border-b border-gray-700">
-                    <h2 class="text-2xl font-bold text-gray-50">All Players' Confidence Matrix</h2>
-                    <span id="visibilityBadge" class="bg-green-950 text-green-300 text-xs font-semibold px-4 py-2 rounded-full border border-green-800">Unlocked & Visible</span>
+                    <div>
+                        <h2 class="text-2xl font-bold tracking-tight text-gray-50 flex items-center gap-3">
+                            <svg class="w-7 h-7 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                            All Players' Confidence Matrix
+                        </h2>
+                        <p class="text-sm text-gray-400 mt-1">Green highlights indicate correct selections adding points to the live leaderboard.</p>
+                    </div>
+                    <span id="visibilityBadge" class="bg-red-950 text-red-300 text-xs font-semibold px-4 py-2 rounded-full border border-red-800">Hidden Until Kickoff</span>
                 </div>
+                
                 <div id="allPicksMatrixContainer" class="overflow-x-auto pb-2">
                     <div class="text-center py-12 text-gray-400">Loading matrix...</div>
                 </div>
             </div>
         </div>
+
     </main>
 
+    <!-- HIDDEN CONTAINER TO RENDER CLEAN TEXT LIST FOR JPG EXPORT -->
+    <div id="exportCanvasContainer" style="position: absolute; left: -9999px; top: -9999px;">
+        <div id="exportCard" style="width: 700px; background-color: #0f172a; color: #f8fafc; padding: 40px; font-family: ui-sans-serif, system-ui, sans-serif; border: 2px solid #334155; border-radius: 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #334155; padding-bottom: 20px; margin-bottom: 24px;">
+                <div>
+                    <h1 id="exportTitle" style="font-size: 24px; font-weight: 800; color: #eab308; margin: 0 0 4px 0;">NFL CONFIDENCE POOL</h1>
+                    <p id="exportSubTitle" style="font-size: 14px; color: #94a3b8; margin: 0;">Weekly Picks Submission List</p>
+                </div>
+                <div style="text-align: right;">
+                    <div id="exportPlayerName" style="font-size: 18px; font-weight: 700; color: #f8fafc;">Player: --</div>
+                    <div id="exportTimestamp" style="font-size: 12px; color: #64748b; margin-top: 2px;">--</div>
+                </div>
+            </div>
+            
+            <div id="exportListItems" style="display: flex; flex-direction: column; gap: 8px;">
+                <!-- Dynamically populated picks list -->
+            </div>
+
+            <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid #334155; display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 14px; font-weight: 700; color: #eab308;">Monday Night Tie-Breaker (Total Points):</span>
+                <span id="exportTieBreakerVal" style="font-size: 16px; font-weight: 900; color: #f8fafc; background-color: #1e293b; padding: 6px 16px; border-radius: 8px; border: 1px solid #475569;">--</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- html2canvas for exporting text list as .jpg -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
     <script>
+        // 🔒 SECURE CONFIGURATION (HIDDEN SECRETS)
         const firebaseConfig = {
             apiKey: "AIzaSyBpLXiQn_7XIZbJ38uV_-PwTkIQFSqUraQ",
             authDomain: "juicyo-rotation.firebaseapp.com",
@@ -173,30 +284,55 @@
         }
 
         let currentUser = null;
-        let currentWeek = 3;         
-        let leaderboardWeek = 3;
+        
+        // Dynamically compute current NFL Week based on current date
+        function determineCurrentNFLWeek() {
+            const now = new Date();
+            const year = now.getFullYear();
+            // Approximate NFL Season Week 1 start: First Thursday/Sunday after Labor Day (roughly Sept 7)
+            const seasonStart = new Date(year, 8, 7); // Sept 7 of current year
+            
+            // If we are before September, default to Week 1 of the upcoming/current year context
+            if (now < seasonStart) return 1;
+
+            const diffTime = now - seasonStart;
+            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+            const calculatedWeek = Math.floor(diffDays / 7) + 1;
+
+            if (calculatedWeek < 1) return 1;
+            if (calculatedWeek > 18) return 18;
+            return calculatedWeek;
+        }
+
+        let currentWeek = determineCurrentNFLWeek();         
+        let leaderboardWeek = currentWeek;
         let sampleGames = [];        
         let userPicks = {};          
         let tieBreakerScore = "";
         let allParticipantsPicks = {};
         let leaderboardParticipantsPicks = {};
-        let leaderboardRawDocs = {};
+        let firstGameKickoffTimestamp = null;
+        let countdownInterval = null;
+        let currentActiveListenerUnsubscribe = null;
         let leaderboardListenerUnsubscribe = null;
-        let activeListenerUnsubscribe = null;
+
+        const FORCE_TEST_MODE = false;  
 
         window.onload = function() {
             document.getElementById('weekSelector').value = currentWeek;
             document.getElementById('leaderboardWeekSelector').value = leaderboardWeek;
-            fetchScheduleForWeek(currentWeek, () => {
-                initRealtimeListeners();
-            });
+            fetchScheduleForWeek(currentWeek);
+            initRealtimeListeners();
         };
 
         function getGameKey(game) {
             return `${game.away}_vs_${game.home}`.toLowerCase().replace(/[^a-z0-9_]/g, '');
         }
 
-        async function fetchScheduleForWeek(weekNum, callback) {
+        async function fetchScheduleForWeek(weekNum) {
+            currentWeek = weekNum;
+            document.getElementById('weekTitleHeader').innerText = `Week ${weekNum} Confidence Matchups`;
+            
             try {
                 const response = await fetch(`https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?week=${weekNum}&seasontype=2`);
                 const data = await response.json();
@@ -206,7 +342,7 @@
                         const competition = event.competitions[0];
                         const competitors = competition.competitors;
                         const homeTeamObj = competitors.find(c => c.homeAway === 'home');
-                        const awayTeamObj = competitors.find(c => c.awayAway === 'away' || c.homeAway === 'away');
+                        const awayTeamObj = competitors.find(c => c.homeAway === 'away');
                         
                         const homeName = homeTeamObj.team.shortDisplayName || homeTeamObj.team.name;
                         const awayName = awayTeamObj.team.shortDisplayName || awayTeamObj.team.name;
@@ -217,26 +353,39 @@
                             winnerName = homeTeamObj.winner ? homeName : awayName;
                         }
 
+                        const isMNFGame = (idx === data.events.length - 1) || event.name.toLowerCase().includes('monday');
+
                         return {
                             id: `g${idx + 1}`,
                             away: awayName,
                             home: homeName,
-                            time: gameDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
+                            time: gameDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }),
                             dateObj: gameDate,
-                            isMNF: (idx === data.events.length - 1),
+                            isFirstGame: idx === 0,
+                            isMNF: isMNFGame,
                             winner: winnerName
                         };
                     });
+
+                    sampleGames.sort((a, b) => a.dateObj - b.dateObj);
+                    if (sampleGames.length > 16) sampleGames = sampleGames.slice(0, 16);
+
+                    if (sampleGames.length > 0) {
+                        firstGameKickoffTimestamp = sampleGames[0].dateObj.getTime();
+                        startCountdownTimer(firstGameKickoffTimestamp);
+                    }
                 } else {
                     loadFallbackGames(weekNum);
                 }
             } catch (err) {
+                console.log("Using fallback schedule due to API network restriction: ", err);
                 loadFallbackGames(weekNum);
             }
 
             renderMatchups();
             if (currentUser) loadUserPicks();
-            if (callback) callback();
+            checkAndUpdateCompletedGames();
+            initRealtimeListeners();
         }
 
         function loadFallbackGames(weekNum) {
@@ -247,33 +396,129 @@
                     id: `g${i+1}`,
                     away: teams[i % teams.length],
                     home: teams[(i+5) % teams.length],
-                    time: `Sun`,
-                    dateObj: new Date(Date.now() - 86400000 * 5),
+                    time: `Sun Sep ${12 + weekNum}, 1:00 PM`,
+                    dateObj: new Date(Date.now() + 86400000 * (i+1)),
+                    isFirstGame: i === 0,
                     isMNF: i === 15,
                     winner: null
                 });
             }
+            firstGameKickoffTimestamp = sampleGames[0].dateObj.getTime();
+            startCountdownTimer(firstGameKickoffTimestamp);
         }
 
         function changeActiveWeek(weekVal) {
-            currentWeek = Number(weekVal);
-            document.getElementById('weekTitleHeader').innerText = `Week ${currentWeek} Confidence Matchups`;
             userPicks = {};
-            fetchScheduleForWeek(currentWeek);
+            fetchScheduleForWeek(Number(weekVal));
         }
 
         function changeLeaderboardWeek(weekVal) {
             leaderboardWeek = Number(weekVal);
-            fetchScheduleForWeek(leaderboardWeek, () => {
-                initLeaderboardListeners();
+            initRealtimeListeners();
+        }
+
+        function startCountdownTimer(targetTimeMs) {
+            if (countdownInterval) clearInterval(countdownInterval);
+            const timerText = document.getElementById('countdownTimerText');
+            
+            countdownInterval = setInterval(() => {
+                const now = new Date().getTime();
+                const distance = targetTimeMs - now;
+
+                if (distance < 0) {
+                    timerText.innerText = "LOCKED";
+                    document.getElementById('countdownBadge').className = "bg-red-900 border border-red-700 text-red-200 text-xs font-semibold px-5 py-3 rounded-xl flex items-center gap-3 shadow-inner";
+                    clearInterval(countdownInterval);
+                    return;
+                }
+
+                const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+                let displayStr = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                if (days > 0) displayStr = `${days}d ${displayStr}`;
+                
+                timerText.innerText = displayStr;
+            }, 1000);
+        }
+
+        async function checkAndUpdateCompletedGames() {
+            try {
+                const response = await fetch(`https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?week=${currentWeek}&seasontype=2`);
+                const data = await response.json();
+                
+                let scoresChanged = false;
+                if (data && data.events) {
+                    data.events.forEach(event => {
+                        const competition = event.competitions[0];
+                        if (competition.status.type.completed) {
+                            const competitors = competition.competitors;
+                            const homeTeamObj = competitors.find(c => c.homeAway === 'home');
+                            const awayTeamObj = competitors.find(c => c.homeAway === 'away');
+                            
+                            const homeTeamName = homeTeamObj.team.shortDisplayName || homeTeamObj.team.name;
+                            const awayTeamName = awayTeamObj.team.shortDisplayName || awayTeamObj.team.name;
+                            const winningTeam = homeTeamObj.winner ? homeTeamName : awayTeamName;
+
+                            const matchedGame = sampleGames.find(g => 
+                                g.home.toLowerCase() === homeTeamName.toLowerCase() || 
+                                g.away.toLowerCase() === awayTeamName.toLowerCase() ||
+                                homeTeamName.toLowerCase().includes(g.home.toLowerCase()) ||
+                                awayTeamName.toLowerCase().includes(g.home.toLowerCase())
+                            );
+
+                            if (matchedGame && matchedGame.winner !== winningTeam) {
+                                matchedGame.winner = winningTeam;
+                                scoresChanged = true;
+                            }
+                        }
+                    });
+                }
+
+                if (scoresChanged && db) {
+                    recalculateAllUserScoresInFirestore(currentWeek);
+                }
+            } catch (err) {
+                console.log("Automated API score check warning: ", err);
+            }
+        }
+
+        function recalculateAllUserScoresInFirestore(weekNum) {
+            if (!db) return;
+
+            db.collection(`picks_week_${weekNum}`).get().then((snapshot) => {
+                snapshot.docs.forEach(docSnap => {
+                    const playerData = docSnap.data();
+                    const username = playerData.username;
+                    const selections = playerData.selections || {};
+
+                    let totalPointsEarned = 0;
+                    sampleGames.forEach(game => {
+                        if (game.winner) {
+                            const gameKey = getGameKey(game);
+                            const userPick = selections[gameKey];
+                            if (userPick && userPick.team) {
+                                const picked = userPick.team.trim().toLowerCase();
+                                const actualWinner = game.winner.trim().toLowerCase();
+                                if (picked === actualWinner || actualWinner.includes(picked) || picked.includes(actualWinner)) {
+                                    totalPointsEarned += Number(userPick.confidence || 0);
+                                }
+                            }
+                        }
+                    });
+
+                    db.collection(`users_week_${weekNum}`).doc(username).set({
+                        points: totalPointsEarned
+                    }, { merge: true });
+                });
             });
         }
 
-        function manualRefreshScores() {
-            fetchScheduleForWeek(leaderboardWeek, () => {
-                renderLeaderboardAndMatrix();
-                alert("Scores and leaderboard refreshed!");
-            });
+        function areAllGamesCompletedForWeek() {
+            if (sampleGames.length === 0) return false;
+            return sampleGames.every(game => game.winner !== null);
         }
 
         function switchTab(tabName) {
@@ -285,170 +530,178 @@
             if (tabName === 'matchups') {
                 viewMatchups.classList.remove('hidden');
                 viewAllPicks.classList.add('hidden');
-                tabMatchups.className = "px-6 py-3 font-bold text-sm rounded-t-lg border-t border-x border-gray-700 bg-gray-800 text-yellow-500 cursor-pointer";
-                tabAllPicks.className = "px-6 py-3 font-bold text-sm rounded-t-lg border-t border-x border-transparent text-gray-400 cursor-pointer";
+                tabMatchups.className = "px-6 py-3 font-bold text-sm rounded-t-lg border-t border-x border-gray-700 bg-gray-800 text-yellow-500 transition-all duration-150 cursor-pointer flex items-center gap-2";
+                tabAllPicks.className = "px-6 py-3 font-bold text-sm rounded-t-lg border-t border-x border-transparent text-gray-400 hover:text-gray-200 transition-all duration-150 cursor-pointer flex items-center gap-2";
             } else if (tabName === 'allPicks') {
                 viewMatchups.classList.add('hidden');
                 viewAllPicks.classList.remove('hidden');
-                tabAllPicks.className = "px-6 py-3 font-bold text-sm rounded-t-lg border-t border-x border-gray-700 bg-gray-800 text-yellow-500 cursor-pointer";
-                tabMatchups.className = "px-6 py-3 font-bold text-sm rounded-t-lg border-t border-x border-transparent text-gray-400 cursor-pointer";
-                renderLeaderboardAndMatrix();
+                tabAllPicks.className = "px-6 py-3 font-bold text-sm rounded-t-lg border-t border-x border-gray-700 bg-gray-800 text-yellow-500 transition-all duration-150 cursor-pointer flex items-center gap-2";
+                tabMatchups.className = "px-6 py-3 font-bold text-sm rounded-t-lg border-t border-x border-transparent text-gray-400 hover:text-gray-200 transition-all duration-150 cursor-pointer flex items-center gap-2";
+                renderAllPicksMatrix();
             }
         }
 
+        function hasFirstGameStarted() {
+            if (FORCE_TEST_MODE) return true;
+            if (!firstGameKickoffTimestamp) return false;
+            return new Date().getTime() >= firstGameKickoffTimestamp;
+        }
+
         function initRealtimeListeners() {
-            if (activeListenerUnsubscribe) activeListenerUnsubscribe();
+            if (currentActiveListenerUnsubscribe) currentActiveListenerUnsubscribe();
+            if (leaderboardListenerUnsubscribe) leaderboardListenerUnsubscribe();
+
             if (db) {
-                activeListenerUnsubscribe = db.collection(`picks_week_${currentWeek}`).onSnapshot((snapshot) => {
+                currentActiveListenerUnsubscribe = db.collection(`picks_week_${currentWeek}`).onSnapshot((snapshot) => {
                     allParticipantsPicks = {};
                     snapshot.docs.forEach(doc => {
                         const data = doc.data();
                         allParticipantsPicks[data.username] = data.selections || {};
                     });
+                    
+                    if (areAllGamesCompletedForWeek()) {
+                        allParticipantsPicks = {};
+                    }
+                    
                     renderParticipantsList();
                 });
-            }
-            initLeaderboardListeners();
-        }
 
-        function initLeaderboardListeners() {
-            if (leaderboardListenerUnsubscribe) leaderboardListenerUnsubscribe();
-
-            if (db) {
                 leaderboardListenerUnsubscribe = db.collection(`picks_week_${leaderboardWeek}`).onSnapshot((snapshot) => {
                     leaderboardParticipantsPicks = {};
-                    leaderboardRawDocs = {};
                     snapshot.docs.forEach(doc => {
                         const data = doc.data();
                         leaderboardParticipantsPicks[data.username] = data.selections || {};
-                        leaderboardRawDocs[data.username] = data;
                     });
-                    renderLeaderboardAndMatrix();
+                    if (!document.getElementById('viewAllPicks').classList.contains('hidden')) {
+                        renderAllPicksMatrix();
+                    }
                 });
+
+                db.collection(`users_week_${leaderboardWeek}`).onSnapshot((snapshot) => {
+                    renderLeaderboardFromSnapshot(snapshot);
+                });
+            } else {
+                allParticipantsPicks = {};
+                leaderboardParticipantsPicks = {};
+                renderParticipantsList();
+                renderLeaderboard();
             }
         }
 
         function renderParticipantsList() {
             const container = document.getElementById('participantsListContainer');
             const rosterBadge = document.getElementById('rosterCountBadge');
+            
+            if (areAllGamesCompletedForWeek()) {
+                rosterBadge.innerText = `0 Joined`;
+                container.innerHTML = `<p class="text-xs text-gray-500 text-center py-6">All games for Week ${currentWeek} have ended. Roster reset.</p>`;
+                return;
+            }
+
             const players = Object.keys(allParticipantsPicks);
             rosterBadge.innerText = `${players.length} Joined`;
 
             if (players.length === 0) {
-                container.innerHTML = `<p class="text-xs text-gray-500 text-center py-6">No participants registered yet.</p>`;
+                container.innerHTML = `<p class="text-xs text-gray-500 text-center py-6">No participants registered yet for Week ${currentWeek}.</p>`;
                 return;
             }
 
             container.innerHTML = players.map(player => `
                 <div class="flex items-center justify-between p-3 bg-gray-900 border border-gray-700/60 rounded-xl">
-                    <span class="text-sm font-semibold text-gray-200">${player}</span>
-                    <span class="text-[10px] text-yellow-400 bg-gray-800 px-2.5 py-1 rounded-md">Active</span>
+                    <span class="text-sm font-semibold text-gray-200 flex items-center gap-2.5">
+                        <span class="w-2.5 h-2.5 rounded-full bg-green-500 shadow-sm shadow-green-500"></span> ${player}
+                    </span>
+                    <span class="text-[10px] text-yellow-400 bg-gray-800 px-2.5 py-1 rounded-md border border-gray-700 font-medium">Active</span>
                 </div>
-            `).join('');
-        }
-
-        function renderLeaderboardAndMatrix() {
-            renderLeaderboard();
-            renderAllPicksMatrix();
-        }
-
-        function renderLeaderboard() {
-            const tbody = document.getElementById('leaderboardBody');
-            const players = Object.keys(leaderboardParticipantsPicks);
-
-            if (players.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-gray-500 text-xs">No standings for Week ${leaderboardWeek}.</td></tr>`;
-                return;
-            }
-
-            let calculatedStandings = [];
-
-            players.forEach(player => {
-                const playerDoc = leaderboardRawDocs[player] || {};
-                const playerPicks = playerDoc.selections || {};
-                let totalPoints = 0;
-                let winsCount = 0;
-
-                sampleGames.forEach(game => {
-                    const gameKey = getGameKey(game);
-                    let pickObj = playerPicks[gameKey];
-                    if (!pickObj) {
-                        const foundKey = Object.keys(playerPicks).find(k => k.includes(game.home.toLowerCase().replace(/[^a-z0-9]/g, '')) || k.includes(game.away.toLowerCase().replace(/[^a-z0-9]/g, '')));
-                        if (foundKey) pickObj = playerPicks[foundKey];
-                    }
-
-                    if (pickObj && pickObj.team && game.winner) {
-                        if (pickObj.team.toLowerCase() === game.winner.toLowerCase()) {
-                            totalPoints += Number(pickObj.confidence || 0);
-                            winsCount++;
-                        }
-                    }
-                });
-
-                calculatedStandings.push({
-                    username: player,
-                    tieBreaker: playerDoc.tieBreaker || '-',
-                    wins: winsCount,
-                    points: totalPoints
-                });
-            });
-
-            // Sort by points descending, then wins
-            calculatedStandings.sort((a, b) => b.points - a.points || b.wins - a.wins);
-
-            tbody.innerHTML = calculatedStandings.map((data, index) => `
-                <tr class="hover:bg-gray-700/40">
-                    <td class="p-4 font-medium">${index + 1}</td>
-                    <td class="p-4 font-bold text-gray-100">${data.username}</td>
-                    <td class="p-4 text-center text-gray-400 font-mono">${data.tieBreaker}</td>
-                    <td class="p-4 text-center font-bold text-gray-300">${data.wins}</td>
-                    <td class="p-4 text-right font-bold text-yellow-400">${data.points} Pts</td>
-                </tr>
             `).join('');
         }
 
         function renderAllPicksMatrix() {
             const container = document.getElementById('allPicksMatrixContainer');
-            const players = Object.keys(leaderboardParticipantsPicks);
-            
-            if (players.length === 0 || sampleGames.length === 0) {
-                container.innerHTML = `<p class="text-sm text-gray-400 py-8 text-center">No player picks found for Week ${leaderboardWeek}.</p>`;
+            const badge = document.getElementById('visibilityBadge');
+            const lockIndicator = document.getElementById('lockStatusIndicator');
+            const unlocked = hasFirstGameStarted();
+
+            if (!unlocked && leaderboardWeek === currentWeek) {
+                badge.className = "bg-red-950 text-red-300 text-xs font-semibold px-4 py-2 rounded-full border border-red-800";
+                badge.innerText = "Hidden Until Kickoff";
+                lockIndicator.className = "text-xs bg-red-900 text-red-300 px-2 py-0.5 rounded-full ml-1 font-mono";
+                lockIndicator.innerText = "LOCKED";
+                
+                container.innerHTML = `
+                    <div class="text-center py-16 text-gray-400">
+                        <p class="text-xl font-bold text-gray-300 mb-2">🔒 Confidential Confidence Rankings</p>
+                        <p class="text-sm">All players' picks and assigned points reveal automatically at kickoff!</p>
+                    </div>
+                `;
                 return;
             }
 
-            let headerHtml = `<table class="w-full text-left border-collapse text-xs"><thead><tr class="bg-gray-900 text-gray-300 uppercase"><th class="p-3.5 sticky left-0 bg-gray-900 z-10">Player</th>`;
+            badge.className = "bg-green-950 text-green-300 text-xs font-semibold px-4 py-2 rounded-full border border-green-800";
+            badge.innerText = "Unlocked & Visible";
+            lockIndicator.className = "text-xs bg-green-900 text-green-300 px-2 py-0.5 rounded-full ml-1 font-mono";
+            lockIndicator.innerText = "LIVE";
+
+            const players = Object.keys(leaderboardParticipantsPicks);
+            if (players.length === 0) {
+                container.innerHTML = `<p class="text-sm text-gray-400 py-8 text-center">No player picks submitted yet for Week ${leaderboardWeek}.</p>`;
+                return;
+            }
+
+            if (!sampleGames || sampleGames.length === 0) {
+                container.innerHTML = `<p class="text-sm text-gray-400 py-8 text-center">Schedule loading...</p>`;
+                return;
+            }
+
+            let headerHtml = `
+                <table class="w-full text-left border-collapse text-xs">
+                    <thead>
+                        <tr class="bg-gray-900 text-gray-300 uppercase tracking-wider">
+                            <th class="p-3.5 sticky left-0 bg-gray-900 z-10 border-b border-gray-700">Player</th>
+            `;
+
             sampleGames.forEach((g, idx) => {
-                headerHtml += `<th class="p-3.5 text-center whitespace-nowrap">G${idx+1}<br><span class="text-[10px] text-gray-400">${g.away?.substring(0,3)}@${g.home?.substring(0,3)}</span></th>`;
+                const matchupLabel = (g.away && g.home) ? `${g.away.substring(0,3)}@${g.home.substring(0,3)}` : 'Matchup';
+                headerHtml += `<th class="p-3.5 text-center border-b border-gray-700 whitespace-nowrap">G${idx+1}<br><span class="text-[10px] text-gray-400 font-normal normal-case">${matchupLabel}</span></th>`;
             });
+
             headerHtml += `</tr></thead><tbody class="divide-y divide-gray-700">`;
 
             let bodyHtml = '';
             players.forEach(player => {
                 const playerPicks = leaderboardParticipantsPicks[player] || {};
-                bodyHtml += `<tr class="hover:bg-gray-700/35"><td class="p-3.5 font-bold text-yellow-400 sticky left-0 bg-gray-800 z-10">${player}</td>`;
+                
+                bodyHtml += `
+                    <tr class="hover:bg-gray-700/35 transition">
+                        <td class="p-3.5 font-bold text-yellow-400 sticky left-0 bg-gray-800 z-10 whitespace-nowrap shadow-sm">${player}</td>
+                `;
 
                 sampleGames.forEach(game => {
                     const gameKey = getGameKey(game);
-                    let pickObj = playerPicks[gameKey];
-                    if (!pickObj) {
-                        const foundKey = Object.keys(playerPicks).find(k => k.includes(game.home.toLowerCase().replace(/[^a-z0-9]/g, '')) || k.includes(game.away.toLowerCase().replace(/[^a-z0-9]/g, '')));
-                        if (foundKey) pickObj = playerPicks[foundKey];
-                    }
-
+                    const pickObj = playerPicks[gameKey];
                     let cellDisplay = `<span class="text-gray-600">-</span>`;
+
                     if (pickObj && pickObj.team) {
-                        let highlightClass = "bg-gray-900 text-gray-200";
+                        const pickedTeam = pickObj.team;
+                        const conf = pickObj.confidence || 0;
+                        const isHome = (pickedTeam === game.home);
+                        
+                        let winnerStyle = isHome ? 'bg-blue-950 text-blue-300 border border-blue-800/60' : 'bg-purple-950 text-purple-300 border border-purple-800/60';
+                        
                         if (game.winner) {
-                            if (pickObj.team.toLowerCase() === game.winner.toLowerCase()) {
-                                highlightClass = "bg-green-900/60 text-green-300 border border-green-700";
+                            if (pickedTeam.toLowerCase() === game.winner.toLowerCase() || game.winner.toLowerCase().includes(pickedTeam.toLowerCase())) {
+                                winnerStyle = 'bg-green-950 text-green-300 border-2 border-green-500 font-bold shadow-sm';
                             } else {
-                                highlightClass = "bg-red-950/40 text-red-300 line-through opacity-75";
+                                winnerStyle = 'bg-gray-900 text-gray-500 line-through opacity-40';
                             }
                         }
-                        cellDisplay = `<span class="px-2.5 py-1.5 rounded-md font-medium inline-block ${highlightClass}">${pickObj.team} <b class="text-yellow-400 font-mono">(${pickObj.confidence || 0})</b></span>`;
+                        
+                        cellDisplay = `<span class="px-2.5 py-1.5 rounded-md font-medium inline-block ${winnerStyle}">${pickedTeam} <b class="text-yellow-400 font-mono">(${conf})</b></span>`;
                     }
+
                     bodyHtml += `<td class="p-3.5 text-center whitespace-nowrap">${cellDisplay}</td>`;
                 });
+
                 bodyHtml += `</tr>`;
             });
 
@@ -457,25 +710,50 @@
 
         function renderMatchups() {
             const container = document.getElementById('matchupsContainer');
+            const mnfGame = sampleGames.find(g => g.isMNF) || sampleGames[sampleGames.length - 1];
+            if(mnfGame) {
+                document.getElementById('tieBreakerLabel').innerText = `Total combined score for ${mnfGame.away} vs ${mnfGame.home}`;
+            }
+
             container.innerHTML = sampleGames.map((game, idx) => {
                 const gameKey = getGameKey(game);
                 const currentPick = userPicks[gameKey] || {};
-                const isAwaySelected = currentPick.team === game.away;
-                const isHomeSelected = currentPick.team === game.home;
+                const currentConfidence = currentPick.confidence || "";
+
+                const usedConfidenceValues = new Set();
+                for (let gKey in userPicks) {
+                    if (gKey !== gameKey && userPicks[gKey].confidence) {
+                        usedConfidenceValues.add(Number(userPicks[gKey].confidence));
+                    }
+                }
 
                 let optionsHtml = `<option value="">Conf Pts</option>`;
                 for (let i = 1; i <= sampleGames.length; i++) {
-                    optionsHtml += `<option value="${i}" ${currentPick.confidence == i ? 'selected' : ''}>${i} Pts</option>`;
+                    if (!usedConfidenceValues.has(i) || currentConfidence == i) {
+                        optionsHtml += `<option value="${i}" ${currentConfidence == i ? 'selected' : ''}>${i} Pts</option>`;
+                    }
                 }
 
+                const isAwaySelected = currentPick.team === game.away;
+                const isHomeSelected = currentPick.team === game.home;
+
                 return `
-                    <div class="bg-gray-900 border border-gray-700 rounded-xl p-5 flex flex-col lg:flex-row justify-between items-center gap-4">
-                        <span class="text-xs font-bold text-yellow-500">Game ${idx+1} (${game.time})</span>
-                        <div class="flex items-center gap-3">
-                            <button onclick="selectTeam('${gameKey}', '${game.away}')" class="pick-btn w-32 py-3 rounded-xl border border-gray-700 bg-gray-800 text-gray-300 text-sm font-semibold cursor-pointer ${isAwaySelected ? 'selected' : ''}">${game.away}</button>
-                            <span class="text-xs text-gray-500">at</span>
-                            <button onclick="selectTeam('${gameKey}', '${game.home}')" class="pick-btn w-32 py-3 rounded-xl border border-gray-700 bg-gray-800 text-gray-300 text-sm font-semibold cursor-pointer ${isHomeSelected ? 'selected' : ''}">${game.home}</button>
-                            <select onchange="updateConfidence('${gameKey}', this.value)" class="bg-gray-800 border border-gray-600 rounded-xl px-3 py-3 text-yellow-400 font-bold text-xs cursor-pointer">${optionsHtml}</select>
+                    <div class="bg-gray-900 border ${game.isMNF ? 'border-yellow-500/60 bg-yellow-500/5' : 'border-gray-700/70'} rounded-xl p-5 flex flex-col lg:flex-row justify-between items-center gap-4 transition duration-150 hover:border-gray-500 shadow-sm">
+                        <div class="text-center lg:text-left flex flex-col">
+                            <span class="text-xs font-bold text-yellow-500/90 uppercase tracking-wider">Game ${idx+1} • ${game.time}</span>
+                            ${game.winner ? `<span class="mt-1 bg-green-950 text-green-300 border border-green-800 text-[10px] font-bold px-2.5 py-0.5 rounded-full w-fit mx-auto lg:mx-0">FINAL: ${game.winner} Won</span>` : ''}
+                        </div>
+                        <div class="flex items-center gap-3 w-full lg:w-auto justify-center flex-wrap sm:flex-nowrap">
+                            <button onclick="selectTeam('${gameKey}', '${game.away}')" class="pick-btn w-32 py-3 rounded-xl border border-gray-700 bg-gray-800 text-gray-300 text-sm font-semibold hover:bg-gray-700 transition cursor-pointer ${isAwaySelected ? 'selected' : ''}">
+                                ${game.away}
+                            </button>
+                            <span class="text-xs font-bold text-gray-500 uppercase tracking-widest px-1">at</span>
+                            <button onclick="selectTeam('${gameKey}', '${game.home}')" class="pick-btn w-32 py-3 rounded-xl border border-gray-700 bg-gray-800 text-gray-300 text-sm font-semibold hover:bg-gray-700 transition cursor-pointer ${isHomeSelected ? 'selected' : ''}">
+                                ${game.home}
+                            </button>
+                            <select onchange="updateConfidence('${gameKey}', this.value)" class="bg-gray-800 border border-gray-600 rounded-xl px-3 py-3 text-yellow-400 font-bold text-xs focus:outline-none focus:ring-1 focus:ring-yellow-500 cursor-pointer">
+                                ${optionsHtml}
+                            </select>
                         </div>
                     </div>
                 `;
@@ -492,26 +770,80 @@
         function updateConfidence(gameKey, val) {
             if (!currentUser) return;
             if (!userPicks[gameKey]) userPicks[gameKey] = {};
-            userPicks[gameKey].confidence = val === "" ? "" : Number(val);
+            if (val === "") {
+                delete userPicks[gameKey].confidence;
+            } else {
+                userPicks[gameKey].confidence = Number(val);
+            }
             renderMatchups();
         }
 
-        function updateTieBreaker(val) { tieBreakerScore = val; }
+        function updateTieBreaker(val) {
+            tieBreakerScore = val;
+        }
+
+        function saveTieBreakerOnly() {
+            if (!currentUser) {
+                alert("Please sign in first.");
+                return;
+            }
+            if (db) {
+                db.collection(`picks_week_${currentWeek}`).doc(currentUser).set({
+                    tieBreaker: Number(tieBreakerScore)
+                }, { merge: true }).then(() => {
+                    db.collection(`users_week_${currentWeek}`).doc(currentUser).set({
+                        tieBreaker: Number(tieBreakerScore)
+                    }, { merge: true }).then(() => {
+                        alert("Tie-breaker score saved successfully!");
+                    });
+                }).catch(err => alert("Error saving tie-breaker: " + err.message));
+            } else {
+                alert("Tie-breaker saved locally!");
+            }
+        }
 
         function handleAuth() {
             const username = document.getElementById('usernameInput').value.trim();
             const pin = document.getElementById('pinInput').value.trim();
+            const errDiv = document.getElementById('authErrorMsg');
+            errDiv.classList.add('hidden');
+
             if (!username || pin.length !== 4) {
-                alert("Please enter a valid username and 4-digit PIN.");
+                errDiv.innerText = "Please enter a valid username and a 4-digit numeric PIN.";
+                errDiv.classList.remove('hidden');
                 return;
             }
-            currentUser = username;
-            loadUserPicks();
+
+            if (db) {
+                const userRef = db.collection(`users_week_${currentWeek}`).doc(username);
+                userRef.get().then((doc) => {
+                    if (doc.exists) {
+                        currentUser = username;
+                        userRef.set({ pin: pin }, { merge: true }).then(() => {
+                            loadUserPicks();
+                        });
+                    } else {
+                        userRef.set({ username, pin, points: 0, tieBreaker: 0 }).then(() => {
+                            currentUser = username;
+                            loadUserPicks();
+                        });
+                    }
+                }).catch(err => {
+                    errDiv.innerText = "Firestore Error: " + err.message;
+                    errDiv.classList.remove('hidden');
+                });
+            } else {
+                currentUser = username;
+                loadUserPicks();
+            }
         }
 
         function loadUserPicks() {
             updateAuthUI();
-            if (!db) return;
+            if (!db) {
+                renderMatchups();
+                return;
+            }
             db.collection(`picks_week_${currentWeek}`).doc(currentUser).get().then((doc) => {
                 if (doc.exists) {
                     userPicks = doc.data().selections || {};
@@ -522,36 +854,182 @@
             });
         }
 
+        function logout() {
+            currentUser = null;
+            userPicks = {};
+            tieBreakerScore = "";
+            document.getElementById('usernameInput').value = '';
+            document.getElementById('pinInput').value = '';
+            document.getElementById('tieBreakerInput').value = '';
+            document.getElementById('authErrorMsg').classList.add('hidden');
+            updateAuthUI();
+        }
+
         function updateAuthUI() {
+            const statusDiv = document.getElementById('authStatus');
+            const authCard = document.getElementById('authCard');
+            const matchupsPanel = document.getElementById('matchupsPanel');
+            
             if (currentUser) {
-                document.getElementById('authStatus').innerHTML = `<span class="text-gray-300">Player: <b class="text-yellow-400">${currentUser}</b></span>`;
-                document.getElementById('authCard').classList.add('hidden');
-                document.getElementById('matchupsPanel').classList.remove('hidden');
+                statusDiv.innerHTML = `
+                    <span class="text-gray-300 font-medium">Player: <b class="text-yellow-400">${currentUser}</b></span> 
+                    <button onclick="logout()" class="text-xs bg-gray-700 hover:bg-gray-600 text-gray-200 px-3 py-1.5 rounded-lg transition cursor-pointer font-medium">Sign Out</button>
+                `;
+                authCard.classList.add('hidden');
+                matchupsPanel.classList.remove('hidden');
+                setTimeout(() => { matchupsPanel.classList.remove('opacity-0'); }, 10);
+            } else {
+                statusDiv.innerHTML = `<span class="text-gray-400 italic">Not logged in</span>`;
+                matchupsPanel.classList.add('opacity-0');
+                matchupsPanel.classList.add('hidden');
+                authCard.classList.remove('hidden');
             }
         }
 
         function submitPicks() {
-            if (!currentUser) {
-                alert("Please sign in first.");
-                return;
+            if (!currentUser) return;
+            
+            const assignedConfValues = new Set();
+            for (let game of sampleGames) {
+                const gameKey = getGameKey(game);
+                const pick = userPicks[gameKey];
+                if (!pick || !pick.team || !pick.confidence) {
+                    alert(`Incomplete selections: Please make sure every game has both a winning team and a confidence point value assigned.`);
+                    return;
+                }
+                assignedConfValues.add(pick.confidence);
             }
-            if (!db) {
-                alert("Firebase not configured.");
+
+            if (assignedConfValues.size !== sampleGames.length) {
+                alert(`Error: You must assign unique confidence values from 1 to ${sampleGames.length} across your games.`);
                 return;
             }
 
-            const tieBreaker = document.getElementById('tieBreakerInput').value.trim();
+            let calculatedTotalPoints = 0;
+            for (let game of sampleGames) {
+                if (game.winner) {
+                    const gameKey = getGameKey(game);
+                    const playerPick = userPicks[gameKey];
+                    if (playerPick && playerPick.team) {
+                        const picked = playerPick.team.trim().toLowerCase();
+                        const actualWinner = game.winner.trim().toLowerCase();
+                        if (picked === actualWinner || actualWinner.includes(picked) || picked.includes(actualWinner)) {
+                            calculatedTotalPoints += Number(playerPick.confidence || 0);
+                        }
+                    }
+                }
+            }
 
-            db.collection(`picks_week_${currentWeek}`).doc(currentUser).set({
-                username: currentUser,
-                selections: userPicks,
-                tieBreaker: tieBreaker,
-                timestamp: firebase.firestore.FieldValue.serverTimestamp()
-            }, { merge: true }).then(() => {
-                alert("Picks successfully saved to Firebase!");
-            }).catch(error => {
-                alert("Error saving picks: " + error.message);
+            const executeSaveAndExport = () => {
+                if (confirm("Success! Your picks have been saved. Would you like to download a clean text list .jpg of your picks and confidence points?")) {
+                    generateTextListJpg();
+                } else {
+                    logout();
+                }
+            };
+
+            if (db) {
+                db.collection(`picks_week_${currentWeek}`).doc(currentUser).set({
+                    username: currentUser,
+                    selections: userPicks,
+                    tieBreaker: Number(tieBreakerScore),
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                }).then(() => {
+                    return db.collection(`users_week_${currentWeek}`).doc(currentUser).set({
+                        username: currentUser,
+                        points: calculatedTotalPoints,
+                        tieBreaker: Number(tieBreakerScore)
+                    }, { merge: true });
+                }).then(() => {
+                    executeSaveAndExport();
+                }).catch(err => alert("Error saving picks: " + err.message));
+            } else {
+                executeSaveAndExport();
+            }
+        }
+
+        function generateTextListJpg() {
+            document.getElementById('exportTitle').innerText = `NFL CONFIDENCE POOL`;
+            document.getElementById('exportSubTitle').innerText = `Week ${currentWeek} Official Picks List`;
+            document.getElementById('exportPlayerName').innerText = `Player: ${currentUser}`;
+            document.getElementById('exportTimestamp').innerText = new Date().toLocaleString();
+            document.getElementById('exportTieBreakerVal').innerText = tieBreakerScore !== "" ? tieBreakerScore : "None";
+
+            const listContainer = document.getElementById('exportListItems');
+            let itemsHtml = '';
+
+            sampleGames.forEach((game, idx) => {
+                const gameKey = getGameKey(game);
+                const pick = userPicks[gameKey] || {};
+                const pickedTeam = pick.team || "No Pick";
+                const confPts = pick.confidence || "-";
+
+                itemsHtml += `
+                    <div style="display: flex; justify-content: space-between; align-items: center; background-color: #1e293b; padding: 10px 16px; border-radius: 8px; border: 1px solid #334155; font-size: 14px;">
+                        <span style="color: #94a3b8; font-weight: 600; width: 45px;">G${idx+1}</span>
+                        <span style="color: #f8fafc; flex: 1; text-align: left; padding: 0 10px;">${game.away} @ ${game.home}</span>
+                        <span style="color: #eab308; font-weight: 700; width: 140px; text-align: right;">Pick: ${pickedTeam}</span>
+                        <span style="color: #38bdf8; font-weight: 800; width: 80px; text-align: right; font-family: monospace;">(${confPts} Pts)</span>
+                    </div>
+                `;
             });
+
+            listContainer.innerHTML = itemsHtml;
+
+            const exportCard = document.getElementById('exportCard');
+            html2canvas(exportCard, { backgroundColor: '#0f172a', scale: 2 }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `${currentUser}_Week_${currentWeek}_Picks_List.jpg`;
+                link.href = canvas.toDataURL('image/jpeg', 0.95);
+                link.click();
+                
+                logout();
+            }).catch(err => {
+                console.error("Error generating text list JPG:", err);
+                logout();
+            });
+        }
+
+        function renderLeaderboardFromSnapshot(snapshot) {
+            const tbody = document.getElementById('leaderboardBody');
+            
+            if (snapshot.size === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-gray-500 text-xs">No standings available yet for Week ${leaderboardWeek}.</td></tr>`;
+                return;
+            }
+
+            let playersList = [];
+            snapshot.docs.forEach(doc => {
+                playersList.push(doc.data());
+            });
+
+            playersList.sort((a, b) => (b.points || 0) - (a.points || 0));
+
+            let index = 1;
+            tbody.innerHTML = playersList.map(data => {
+                return renderRow(index++, data.username, data.points || 0, data.tieBreaker);
+            }).join('');
+        }
+
+        function renderLeaderboard() {
+            const tbody = document.getElementById('leaderboardBody');
+            tbody.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-gray-500 text-xs">No standings available yet.</td></tr>`;
+        }
+
+        function renderRow(rank, name, points, tieBreaker) {
+            let rankBadge = `<span class="text-gray-400 font-semibold">${rank}</span>`;
+            if (rank === 1) rankBadge = '🥇';
+            if (rank === 2) rankBadge = '🥈';
+            if (rank === 3) rankBadge = '🥉';
+            
+            return `
+                <tr class="hover:bg-gray-700/40 transition">
+                    <td class="p-4 font-medium">${rankBadge}</td>
+                    <td class="p-4 font-bold text-gray-100">${name}</td>
+                    <td class="p-4 text-center text-gray-400 font-mono">${tieBreaker || '-'}</td>
+                    <td class="p-4 text-right font-bold text-yellow-400">${points} Pts</td>
+                </tr>
+            `;
         }
     </script>
 </body>
