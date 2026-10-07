@@ -39,7 +39,7 @@
         </button>
         <button onclick="switchTab('allPicks')" id="tabAllPicks" class="px-6 py-3 font-bold text-sm rounded-t-lg border-t border-x border-transparent text-gray-400 hover:text-gray-200 transition-all duration-150 cursor-pointer flex items-center gap-2">
             Live Leaderboard & History
-            <span id="lockStatusIndicator" class="text-xs bg-red-900 text-red-300 px-2 py-0.5 rounded-full ml-1 font-mono hidden">LOCKED</span>
+            <span id="lockStatusIndicator" class="text-xs bg-red-900 text-red-300 px-2 py-0.5 rounded-full ml-1 font-mono">LOCKED</span>
         </button>
     </div>
 
@@ -88,7 +88,10 @@
                         </div>
                     </div>
 
-                    <div class="mt-10 pt-6 border-t border-gray-700 flex justify-end">
+                    <div class="mt-10 pt-6 border-t border-gray-700 flex flex-wrap justify-between items-center gap-4">
+                        <button onclick="exportPicksAsJPG()" class="bg-gray-700 hover:bg-gray-600 text-yellow-400 font-bold px-6 py-4 rounded-xl cursor-pointer text-sm flex items-center gap-2">
+                            Download Picks Card (.jpg)
+                        </button>
                         <button onclick="submitPicks()" class="bg-yellow-500 hover:bg-yellow-400 text-gray-950 font-extrabold px-12 py-4 rounded-xl cursor-pointer text-xl shadow-lg">SUBMIT PICKS</button>
                     </div>
                 </div>
@@ -147,7 +150,7 @@
             <div class="bg-gray-800 border border-gray-700 rounded-2xl p-8 shadow-xl">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 pb-4 border-b border-gray-700">
                     <h2 class="text-2xl font-bold text-gray-50">All Players' Confidence Matrix</h2>
-                    <span id="visibilityBadge" class="bg-green-950 text-green-300 text-xs font-semibold px-4 py-2 rounded-full border border-green-800">Unlocked & Visible</span>
+                    <span id="visibilityBadge" class="bg-red-950 text-red-300 text-xs font-semibold px-4 py-2 rounded-full border border-red-800">Locked Until Kickoff</span>
                 </div>
                 <div id="allPicksMatrixContainer" class="overflow-x-auto pb-2">
                     <div class="text-center py-12 text-gray-400">Loading matrix...</div>
@@ -249,7 +252,7 @@
                             id: `g${idx + 1}`,
                             away: awayName,
                             home: homeName,
-                            time: gameDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
+                            time: gameDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }),
                             dateObj: gameDate,
                             isMNF: (idx === data.events.length - 1),
                             winner: winnerName
@@ -421,7 +424,6 @@
                 });
             });
 
-            // Sort by points descending, then wins
             calculatedStandings.sort((a, b) => b.points - a.points || b.wins - a.wins);
 
             tbody.innerHTML = calculatedStandings.map((data, index) => `
@@ -437,8 +439,40 @@
 
         function renderAllPicksMatrix() {
             const container = document.getElementById('allPicksMatrixContainer');
-            const players = Object.keys(leaderboardParticipantsPicks);
+            const badge = document.getElementById('visibilityBadge');
+            const indicator = document.getElementById('lockStatusIndicator');
             
+            // Determine if the first game of the week has kicked off
+            let firstGameKickoff = null;
+            if (sampleGames.length > 0) {
+                // Find the earliest dateObj among games
+                const sortedGames = [...sampleGames].sort((a, b) => (a.dateObj || 0) - (b.dateObj || 0));
+                firstGameKickoff = sortedGames[0]?.dateObj;
+            }
+
+            const now = new Date();
+            const isUnlocked = firstGameKickoff ? (now >= firstGameKickoff) : false;
+
+            if (!isUnlocked) {
+                badge.className = "bg-red-950 text-red-300 text-xs font-semibold px-4 py-2 rounded-full border border-red-800";
+                badge.innerText = "Locked Until Kickoff";
+                if(indicator) indicator.classList.remove('hidden');
+
+                container.innerHTML = `
+                    <div class="text-center py-16 px-4">
+                        <div class="text-yellow-500 font-extrabold text-lg mb-2">🔒 All Player Picks Are Hidden</div>
+                        <p class="text-gray-400 text-sm max-w-md mx-auto">To maintain competitive fairness, all submitted confidence picks remain completely hidden until the very first game of Week ${leaderboardWeek} kicks off.</p>
+                        ${firstGameKickoff ? `<p class="text-xs text-gray-500 mt-4 font-mono">First Kickoff: ${firstGameKickoff.toLocaleString()}</p>` : ''}
+                    </div>
+                `;
+                return;
+            } else {
+                badge.className = "bg-green-950 text-green-300 text-xs font-semibold px-4 py-2 rounded-full border border-green-800";
+                badge.innerText = "Unlocked & Visible";
+                if(indicator) indicator.classList.add('hidden');
+            }
+
+            const players = Object.keys(leaderboardParticipantsPicks);
             if (players.length === 0 || sampleGames.length === 0) {
                 container.innerHTML = `<p class="text-sm text-gray-400 py-8 text-center">No player picks found for Week ${leaderboardWeek}.</p>`;
                 return;
@@ -552,10 +586,23 @@
 
         function updateAuthUI() {
             if (currentUser) {
-                document.getElementById('authStatus').innerHTML = `<span class="text-gray-300">Player: <b class="text-yellow-400">${currentUser}</b></span>`;
+                document.getElementById('authStatus').innerHTML = `<span class="text-gray-300">Player: <b class="text-yellow-400">${currentUser}</b></span> <button onclick="logoutUser()" class="text-xs bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded-md text-gray-300 ml-2 cursor-pointer">Sign Out</button>`;
                 document.getElementById('authCard').classList.add('hidden');
                 document.getElementById('matchupsPanel').classList.remove('hidden');
             }
+        }
+
+        function logoutUser() {
+            currentUser = null;
+            userPicks = {};
+            tieBreakerScore = "";
+            document.getElementById('usernameInput').value = "";
+            document.getElementById('pinInput').value = "";
+            document.getElementById('tieBreakerInput').value = "";
+            document.getElementById('authStatus').innerHTML = `<span class="text-gray-500">Signed Out</span>`;
+            document.getElementById('authCard').classList.remove('hidden');
+            document.getElementById('matchupsPanel').classList.add('hidden');
+            renderMatchups();
         }
 
         function submitPicks() {
@@ -568,6 +615,26 @@
                 return;
             }
 
+            // 1. Validate that all games have a pick and confidence assigned
+            let assignedConfPoints = new Set();
+            for (let i = 0; i < sampleGames.length; i++) {
+                const game = sampleGames[i];
+                const gameKey = getGameKey(game);
+                const pick = userPicks[gameKey];
+
+                if (!pick || !pick.team || !pick.confidence) {
+                    alert(`Incomplete picks: Game ${i + 1} (${game.away} @ ${game.home}) is missing a team choice or confidence point value.`);
+                    return;
+                }
+
+                const confVal = Number(pick.confidence);
+                if (assignedConfPoints.has(confVal)) {
+                    alert(`Duplicate confidence points detected: ${confVal} points has been assigned to multiple games. Each confidence value from 1 to ${sampleGames.length} must be unique.`);
+                    return;
+                }
+                assignedConfPoints.add(confVal);
+            }
+
             const tieBreaker = document.getElementById('tieBreakerInput').value.trim();
 
             db.collection(`picks_week_${currentWeek}`).doc(currentUser).set({
@@ -576,9 +643,50 @@
                 tieBreaker: tieBreaker,
                 timestamp: firebase.firestore.FieldValue.serverTimestamp()
             }, { merge: true }).then(() => {
-                alert("Picks successfully saved to Firebase!");
+                alert("Picks successfully saved and submitted to Firebase!");
+                // 2. Auto-logout session for safety
+                logoutUser();
             }).catch(error => {
                 alert("Error saving picks: " + error.message);
+            });
+        }
+
+        function exportPicksAsJPG() {
+            if (!currentUser) {
+                alert("Please sign in to export your picks.");
+                return;
+            }
+            
+            const listContainer = document.getElementById('exportListItems');
+            document.getElementById('exportPlayerName').innerText = `Player: ${currentUser}`;
+            document.getElementById('exportTimestamp').innerText = `Week ${currentWeek} • ${new Date().toLocaleDateString()}`;
+            document.getElementById('exportTieBreakerVal').innerText = tieBreakerScore || "Not set";
+
+            let htmlContent = '';
+            sampleGames.forEach((game, idx) => {
+                const gameKey = getGameKey(game);
+                const pick = userPicks[gameKey];
+                const teamPicked = pick && pick.team ? pick.team : "No Pick";
+                const confPicked = pick && pick.confidence ? `${pick.confidence} Pts` : "-";
+
+                htmlContent += `
+                    <div style="display: flex; justify-content: space-between; align-items: center; background-color: #1e293b; padding: 10px 16px; border-radius: 8px; border: 1px solid #334155; font-size: 13px;">
+                        <span style="color: #94a3b8; font-weight: 600;">G${idx+1}: ${game.away} @ ${game.home}</span>
+                        <div>
+                            <span style="color: #f8fafc; font-weight: 700; margin-right: 12px;">${teamPicked}</span>
+                            <span style="color: #eab308; font-weight: 800; background-color: #0f172a; padding: 3px 8px; border-radius: 4px;">${confPicked}</span>
+                        </div>
+                    </div>
+                `;
+            });
+            listContainer.innerHTML = htmlContent;
+
+            const exportCard = document.getElementById('exportCard');
+            html2canvas(exportCard, { scale: 2 }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `${currentUser}_Week_${currentWeek}_Picks.jpg`;
+                link.href = canvas.toDataURL('image/jpeg', 0.95);
+                link.click();
             });
         }
     </script>
