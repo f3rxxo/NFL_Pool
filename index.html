@@ -442,10 +442,8 @@
             const badge = document.getElementById('visibilityBadge');
             const indicator = document.getElementById('lockStatusIndicator');
             
-            // Determine if the first game of the week has kicked off
             let firstGameKickoff = null;
             if (sampleGames.length > 0) {
-                // Find the earliest dateObj among games
                 const sortedGames = [...sampleGames].sort((a, b) => (a.dateObj || 0) - (b.dateObj || 0));
                 firstGameKickoff = sortedGames[0]?.dateObj;
             }
@@ -499,15 +497,21 @@
 
                     let cellDisplay = `<span class="text-gray-600">-</span>`;
                     if (pickObj && pickObj.team) {
-                        let highlightClass = "bg-gray-900 text-gray-200";
+                        const pickedTeam = pickObj.team;
+                        const conf = pickObj.confidence || 0;
+                        const isHome = pickedTeam.toLowerCase() === game.home.toLowerCase();
+
+                        let winnerStyle = isHome ? 'bg-blue-950 text-blue-300 border border-blue-800/60' : 'bg-purple-950 text-purple-300 border border-purple-800/60';
+                        
                         if (game.winner) {
-                            if (pickObj.team.toLowerCase() === game.winner.toLowerCase()) {
-                                highlightClass = "bg-green-900/60 text-green-300 border border-green-700";
+                            if (pickedTeam.toLowerCase() === game.winner.toLowerCase() || game.winner.toLowerCase().includes(pickedTeam.toLowerCase())) {
+                                winnerStyle = 'bg-green-950 text-green-300 border-2 border-green-500 font-bold shadow-sm';
                             } else {
-                                highlightClass = "bg-red-950/40 text-red-300 line-through opacity-75";
+                                winnerStyle = 'bg-gray-900 text-gray-500 line-through opacity-40';
                             }
                         }
-                        cellDisplay = `<span class="px-2.5 py-1.5 rounded-md font-medium inline-block ${highlightClass}">${pickObj.team} <b class="text-yellow-400 font-mono">(${pickObj.confidence || 0})</b></span>`;
+
+                        cellDisplay = `<span class="px-2.5 py-1.5 rounded-md font-medium inline-block ${winnerStyle}">${pickedTeam} <b class="text-yellow-400 font-mono">(${conf})</b></span>`;
                     }
                     bodyHtml += `<td class="p-3.5 text-center whitespace-nowrap">${cellDisplay}</td>`;
                 });
@@ -519,15 +523,27 @@
 
         function renderMatchups() {
             const container = document.getElementById('matchupsContainer');
+            
+            const assignedPoints = new Set();
+            Object.values(userPicks).forEach(pick => {
+                if (pick && pick.confidence) {
+                    assignedPoints.add(Number(pick.confidence));
+                }
+            });
+
             container.innerHTML = sampleGames.map((game, idx) => {
                 const gameKey = getGameKey(game);
                 const currentPick = userPicks[gameKey] || {};
                 const isAwaySelected = currentPick.team === game.away;
                 const isHomeSelected = currentPick.team === game.home;
+                const currentConf = Number(currentPick.confidence) || "";
 
                 let optionsHtml = `<option value="">Conf Pts</option>`;
                 for (let i = 1; i <= sampleGames.length; i++) {
-                    optionsHtml += `<option value="${i}" ${currentPick.confidence == i ? 'selected' : ''}>${i} Pts</option>`;
+                    const isAssignedElsewhere = assignedPoints.has(i) && currentConf !== i;
+                    if (!isAssignedElsewhere) {
+                        optionsHtml += `<option value="${i}" ${currentConf === i ? 'selected' : ''}>${i} Pts</option>`;
+                    }
                 }
 
                 return `
@@ -554,7 +570,17 @@
         function updateConfidence(gameKey, val) {
             if (!currentUser) return;
             if (!userPicks[gameKey]) userPicks[gameKey] = {};
-            userPicks[gameKey].confidence = val === "" ? "" : Number(val);
+            
+            const newConf = val === "" ? "" : Number(val);
+            if (newConf !== "") {
+                Object.keys(userPicks).forEach(key => {
+                    if (key !== gameKey && userPicks[key] && Number(userPicks[key].confidence) === newConf) {
+                        userPicks[key].confidence = "";
+                    }
+                });
+            }
+
+            userPicks[gameKey].confidence = newConf;
             renderMatchups();
         }
 
@@ -615,7 +641,6 @@
                 return;
             }
 
-            // 1. Validate that all games have a pick and confidence assigned
             let assignedConfPoints = new Set();
             for (let i = 0; i < sampleGames.length; i++) {
                 const game = sampleGames[i];
@@ -629,7 +654,7 @@
 
                 const confVal = Number(pick.confidence);
                 if (assignedConfPoints.has(confVal)) {
-                    alert(`Duplicate confidence points detected: ${confVal} points has been assigned to multiple games. Each confidence value from 1 to ${sampleGames.length} must be unique.`);
+                    alert(`Duplicate confidence points detected: ${confVal} points has been assigned to multiple games.`);
                     return;
                 }
                 assignedConfPoints.add(confVal);
@@ -644,7 +669,6 @@
                 timestamp: firebase.firestore.FieldValue.serverTimestamp()
             }, { merge: true }).then(() => {
                 alert("Picks successfully saved and submitted to Firebase!");
-                // 2. Auto-logout session for safety
                 logoutUser();
             }).catch(error => {
                 alert("Error saving picks: " + error.message);
