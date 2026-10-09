@@ -449,7 +449,7 @@
             }
 
             const now = new Date();
-            const isUnlocked = firstGameKickoff ? (now >= firstGameKickoff) : false;
+            const isUnlocked = firstGameKickoff ? (now >= firstGameKickoff) : true;
 
             if (!isUnlocked) {
                 badge.className = "bg-red-950 text-red-300 text-xs font-semibold px-4 py-2 rounded-full border border-red-800";
